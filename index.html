@@ -1069,10 +1069,10 @@
                 <p><em>Для начала работы нажмите "Начать общение"</em></p>
             </div>
             <div class="modal-footer">
-                <button class="modal-button secondary" onclick="closeWelcomeModal()">
+                <button class="modal-button secondary" id="closeModalBtn">
                     Позже
                 </button>
-                <button class="modal-button primary" onclick="startChat()">
+                <button class="modal-button primary" id="startChatBtn">
                     Начать общение
                 </button>
             </div>
@@ -1106,7 +1106,9 @@
             welcomeModal: document.getElementById('welcomeModal'),
             charCount: document.getElementById('charCount'),
             initTime: document.getElementById('initTime'),
-            connectionStatus: document.getElementById('connectionStatus')
+            connectionStatus: document.getElementById('connectionStatus'),
+            closeModalBtn: document.getElementById('closeModalBtn'),
+            startChatBtn: document.getElementById('startChatBtn')
         };
 
         // ==================== ИНИЦИАЛИЗАЦИЯ ====================
@@ -1116,6 +1118,9 @@
             
             // Настройка ввода сообщения
             setupMessageInput();
+            
+            // Настройка обработчиков для модального окна
+            setupModalHandlers();
             
             // Восстановление сессии
             restoreSession();
@@ -1134,11 +1139,4 @@
             startAutoSave();
         });
 
-        // ==================== ФУНКЦИИ УТИЛИТЫ ====================
-        function getCurrentTime() {
-            const now = new Date();
-            return now.getHours().toString().padStart(2, '0') + ':' + 
-                   now.getMinutes().toString().padStart(2, '0');
-        }
-
-       
+        // ==================== ФУНК
