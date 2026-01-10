@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💬 Чат с ИИ-агентом Веридиа | Алексей - эксперт по инженерной документации</title>
+    <meta name="description" content="Общайтесь с ИИ-агентом Веридиа. Алексей поможет с документацией на строительных объектах, предложит экспресс-аудит и квалифицирует ваш проект.">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Montserrat для логотипа и заголовков -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Roboto для основного текста -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏗️</text></svg>">
+    <style>
+        :root {
+            /* Основные цвета из гайдлайна Веридиа */
+            --primary-green: #93D500;       /* PANTONE 375 C */
+            --secondary-green: #6EAF2A;     /* Более темный зеленый */
+            --primary-blue: #003DA6;        /* PANTONE 293 C */
+            --dark-blue: #211261;           /* PANTONE 2755 C */
+            --violet: #409986;              /* PANTONE Violet (адаптированный) */
+            --light-bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+            --radius-2xl: 20px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .page-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-wrapper {
+            width: 100%;
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+            background: var(--card-bg);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            overflow: hidden;
+            border: 1px solid rgba(33, 18, 97, 0.1);
+        }
+
+        /* Header Styles - Corporate Design */
+        .chat-header {
+            background: linear-gradient(90deg, var(--primary-blue), var(--dark-blue));
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 3px solid var(--primary-green);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-svg {
+            width: 48px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+        }
+
+        .logo-svg img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo-veridia {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+            color: white;
+            text-transform: uppercase;
+        }
+
+        .logo-tagline {
+            font-family: 'Roboto', sans-serif;
+            font-size: 0.875rem;
+            font-weight: 300;
+            color: rgba(255, 255, 255, 0.9);
+            margin-top: 2px;
+        }
+
+        .title-container {
+            padding-left: 1.5rem;
+            border-left: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .title-container h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: white;
+        }
+
+        .title-container p {
+            font-family: 'Roboto', sans-serif;
+            font-size: 0.875rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(147, 213, 0, 0.2);
+            border: 1px solid var(--primary-green);
+            border-radius: var(--radius-lg);
+            backdrop-filter: blur(10px);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--primary-green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator span {
+            font-family: 'Roboto', sans-serif;
+            font-weight: 500;
+            color: white;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* Chat Area Styles */
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--light-bg);
+        }
+
+        .messages-container {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            background: var(--light-bg);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .message {
+            max-width: 75%;
+            padding: 1.25rem;
+            border-radius: var(--radius-xl);
+            position: relative;
+            animation: slideIn 0.3s ease-out;
+            box-shadow: var(--shadow-sm);
+            word-wrap: break-word;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, var(--primary-blue), var(--dark-blue));
+            color: white;
+            border-bottom-right-radius: var(--radius-sm);
+            border-left: 4px solid var(--primary-green);
+        }
+
+        .message.assistant {
+            align-self: flex-start;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-bottom-left-radius: var(--radius-sm);
+            border-left: 4px solid var(--violet);
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            flex-shrink: 0;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .user .avatar {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .assistant .avatar {
+            background: linear-gradient(135deg, var(--primary-blue), var(--dark-blue));
+            color: white;
+        }
+
+        .sender-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sender-name {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .user .sender-name {
+            color: white;
+        }
+
+        .assistant .sender-name {
+            color: var(--primary-blue);
+        }
+
+        .message-time {
+            font-family: 'Roboto', sans-serif;
+            font-size: 0.75rem;
+            opacity: 0.7;
+            margin-top: 0.5rem;
+        }
+
+        .message-content {
+            line-height: 1.6;
+            white-space: pre-wrap;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .message-content strong {
+            font-weight: 700;
+            color: var(--dark-blue);
+        }
+
+        .message-content em {
+            font-style: italic;
+            color: var(--text-secondary);
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: none;
+            align-self: flex-start;
+            background: white;
+            padding: 1.25rem;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border-color);
+            border-bottom-left-radius: var(--radius-sm);
+            border-left: 4px solid var(--violet);
+            margin: 0 2rem 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .typing-indicator.active {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 0.375rem;
+        }
+
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            background: var(--primary-blue);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite;
+        }
+
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-6px); }
+        }
+
+        /* Progress Indicator */
+        .progress-container {
+            padding: 1.25rem 2rem;
+            background: linear-gradient(90deg, rgba(0, 61, 166, 0.05), rgba(33, 18, 97, 0.05));
+            border-top: 2px solid var(--primary-blue);
+            border-bottom: 2px solid var(--primary-blue);
+        }
+
+        .progress-title {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            color: var(--primary-blue);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .progress-title i {
+            color: var(--primary-green);
+        }
+
+        .progress-items {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .progress-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .progress-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .progress-icon.completed {
+            background: var(--primary-green);
+            color: white;
+            transform: scale(1.1);
+            border-color: var(--secondary-green);
+        }
+
+        .progress-icon.pending {
+            background: white;
+            color: var(--primary-blue);
+            border: 2px solid var(--primary-blue);
+        }
+
+        .progress-text {
+            font-family: 'Roboto', sans-serif;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+
+        .progress-text.completed {
+            color: var(--primary-green);
+            font-weight: 700;
+        }
+
+        /* Input Area */
+        .input-container {
+            padding: 1.5rem 2rem;
+            background: white;
+            border-top: 3px solid var(--primary-blue);
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+        }
+
+        .input-field {
+            flex: 1;
+            position: relative;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 56px;
+            max-height: 160px;
+            padding: 1rem 1.25rem;
+            padding-right: 3.5rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            font-family: 'Roboto', sans-serif;
+            font-size: 1rem;
+            color: var(--text-primary);
+            background: var(--light-bg);
+            resize: none;
+            outline: none;
+            transition: all 0.3s ease;
+            line-height: 1.5;
+        }
+
+        textarea:focus {
+            border-color: var(--primary-blue);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(0, 61, 166, 0.1);
+        }
+
+        .char-counter {
+            position: absolute;
+            right: 0.75rem;
+            bottom: 0.75rem;
+            font-family: 'Roboto', sans-serif;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            background: var(--light-bg);
+            padding: 0.125rem 0.375rem;
+            border-radius: var(--radius-sm);
+        }
+
+        .send-button {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--primary-blue), var(--dark-blue));
+            color: white;
+            border: none;
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .send-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 61, 166, 0.2);
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue));
+        }
+
+        .send-button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .send-button i {
+            font-size: 1.25rem;
+            transition: transform 0.3s ease;
+        }
+
+        .send-button:not(:disabled):hover i {
+            transform: translateX(2px);
+        }
+
+        /* Features Bar */
+        .features-bar {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .feature-button {
+            padding: 0.5rem 1rem;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-family: 'Roboto', sans-serif;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .feature-button:hover {
+            background: var(--primary-blue);
+            border-color: var(--primary-blue);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .feature-button:hover i {
+            color: white;
+        }
+
+        /* Welcome Modal */
+        .welcome-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(33, 18, 97, 0.8);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 2.5rem;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: var(--shadow-xl);
+            border-top: 4px solid var(--primary-green);
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .modal-header h2 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.75rem;
+            color: var(--primary-blue);
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-header p {
+            font-family: 'Roboto', sans-serif;
+            color: var(--text-secondary);
+        }
+
+        .modal-body {
+            margin-bottom: 2rem;
+        }
+
+        .modal-body p {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .modal-features {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+        }
+
+        .modal-feature {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-primary);
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .modal-feature i {
+            color: var(--primary-green);
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .modal-button {
+            flex: 1;
+            padding: 0.875rem 1.5rem;
+            border-radius: var(--radius-lg);
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            font-size: 1rem;
+        }
+
+        .modal-button.primary {
+            background: linear-gradient(135deg, var(--primary-blue), var(--dark-blue));
+            color: white;
+        }
+
+        .modal-button.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 61, 166, 0.2);
+        }
+
+        .modal-button.secondary {
+            background: white;
+            color: var(--primary-blue);
+            border: 2px solid var(--primary-blue);
+        }
+
+        .modal-button.secondary:hover {
+            background: rgba(0, 61, 166, 0.05);
+            transform: translateY(-2px);
+        }
+
+        /* Connection Status */
+        .connection-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 0.75rem 1.25rem;
+            border-radius: var(--radius-lg);
+            font-family: 'Roboto', sans-serif;
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            z-index: 1001;
+            animation: slideInRight 0.3s ease-out;
+            box-shadow: var(--shadow-md);
+        }
+
+        .connection-status.connected {
+            background: var(--primary-green);
+            color: white;
+            border: 1px solid var(--secondary-green);
+        }
+
+        .connection-status.disconnected {
+            background: #ef4444;
+            color: white;
+        }
+
+        .connection-status.hidden {
+            display: none;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .page-container {
+                padding: 10px;
+            }
+            
+            .chat-wrapper {
+                height: 95vh;
+                border-radius: var(--radius-lg);
+            }
+            
+            .chat-header {
+                padding: 0.75rem 1rem;
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+            
+            .header-left {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .title-container {
+                padding-left: 1rem;
+            }
+            
+            .messages-container {
+                padding: 1rem;
+            }
+            
+            .message {
+                max-width: 85%;
+                padding: 1rem;
+            }
+            
+            .input-container {
+                padding: 1rem;
+            }
+            
+            .progress-container {
+                padding: 1rem;
+            }
+            
+            .progress-items {
+                gap: 1rem;
+            }
+            
+            .title-container h1 {
+                font-size: 1.125rem;
+            }
+            
+            .logo-veridia {
+                font-size: 1.25rem;
+            }
+            
+            .welcome-modal {
+                padding: 10px;
+            }
+            
+            .modal-content {
+                padding: 1.5rem;
+            }
+            
+            .modal-footer {
+                flex-direction: column;
+            }
+            
+            .connection-status {
+                top: 10px;
+                right: 10px;
+                font-size: 0.75rem;
+                padding: 0.5rem 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-left {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            
+            .logo-container {
+                width: 100%;
+            }
+            
+            .title-container {
+                border-left: none;
+                padding-left: 0;
+                border-top: 2px solid rgba(255, 255, 255, 0.2);
+                padding-top: 0.5rem;
+                width: 100%;
+            }
+            
+            .logo {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .logo i {
+                font-size: 1.25rem;
+            }
+            
+            .status-indicator span {
+                font-size: 0.75rem;
+            }
+            
+            .features-bar {
+                justify-content: center;
+            }
+            
+            .feature-button span {
+                display: none;
+            }
+            
+            .feature-button {
+                padding: 0.5rem;
+                border-radius: 50%;
+            }
+            
+            .connection-status {
+                top: 5px;
+                right: 5px;
+                padding: 0.375rem 0.75rem;
+            }
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--light-bg);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-blue);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--dark-blue);
+        }
+
+        /* Utilities */
+        .hidden {
+            display: none !important;
+        }
+
+        .text-success {
+            color: var(--primary-green);
+        }
+
+        .text-warning {
+            color: #f59e0b;
+        }
+
+        .text-danger {
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <!-- Connection Status Indicator -->
+    <div class="connection-status hidden" id="connectionStatus">
+        <i class="fas fa-wifi"></i>
+        <span>Соединение...</span>
+    </div>
+
+    <div class="page-container">
+        <div class="chat-wrapper">
+            <!-- Chat Header -->
+            <div class="chat-header">
+                <div class="header-left">
+                    <div class="logo-container">
+                        <div class="logo-svg">
+                            <!-- Вместо SVG файла используем текст логотипа в фирменном стиле -->
+                            <div style="font-family: 'Montserrat', sans-serif; font-weight: 700; color: var(--primary-blue); font-size: 18px; letter-spacing: 1px;">
+                                ВЕРИДИА
+                            </div>
+                        </div>
+                        <div class="logo-text">
+                            <div class="logo-veridia">ВЕРИДИА</div>
+                            <div class="logo-tagline">Управление строительством</div>
+                        </div>
+                    </div>
+                    <div class="title-container">
+                        <h1>ИИ-агент Веридиа</h1>
+                        <p>Алексей • Эксперт по инженерной документации</p>
+                    </div>
+                </div>
+                <div class="status-indicator">
+                    <div class="status-dot"></div>
+                    <span>Онлайн</span>
+                </div>
+            </div>
+
+            <!-- Chat Area -->
+            <div class="chat-area">
+                <!-- Messages Container -->
+                <div class="messages-container" id="messagesContainer">
+                    <!-- Messages will be inserted here dynamically -->
+                    <div class="message assistant">
+                        <div class="message-header">
+                            <div class="avatar">А</div>
+                            <div class="sender-info">
+                                <div class="sender-name">Алексей</div>
+                            </div>
+                        </div>
+                        <div class="message-content">
+                            <strong>Здравствуйте! Я Алексей, ведущий эксперт компании «ВЕРИДИА».</strong><br><br>
+                            Специализируюсь на инженерном сопровождении строительства и подготовке 
+                            исполнительной документации. Готов помочь с вашим проектом и провести 
+                            бесплатный экспресс-аудит документации.<br><br>
+                            <em>Расскажите, пожалуйста, о вашем объекте. Это промышленное здание, склад, 
+                            или другой тип объекта?</em>
+                        </div>
+                        <div class="message-time" id="initTime"></div>
+                    </div>
+                </div>
+
+                <!-- Typing Indicator -->
+                <div class="typing-indicator" id="typingIndicator">
+                    <div class="avatar">А</div>
+                    <div class="typing-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+
+                <!-- Progress Indicator -->
+                <div class="progress-container hidden" id="progressContainer">
+                    <div class="progress-title">
+                        <i class="fas fa-chart-line"></i>
+                        Сбор информации для подготовки коммерческого предложения
+                    </div>
+                    <div class="progress-items">
+                        <div class="progress-item" id="progressName">
+                            <div class="progress-icon pending">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <span class="progress-text">Имя</span>
+                        </div>
+                        <div class="progress-item" id="progressPhone">
+                            <div class="progress-icon pending">
+                                <i class="fas fa-phone"></i>
+                            </div>
+                            <span class="progress-text">Телефон</span>
+                        </div>
+                        <div class="progress-item" id="progressEmail">
+                            <div class="progress-icon pending">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <span class="progress-text">Email</span>
+                        </div>
+                        <div class="progress-item" id="progressProject">
+                            <div class="progress-icon pending">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <span class="progress-text">Тип проекта</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Area -->
+                <div class="input-container">
+                    <div class="input-wrapper">
+                        <div class="input-field">
+                            <textarea 
+                                id="messageInput" 
+                                placeholder="Напишите ваш вопрос о строительной документации..." 
+                                rows="1"
+                                maxlength="2000"
+                            ></textarea>
+                            <div class="char-counter">
+                                <span id="charCount">0</span>/2000
+                            </div>
+                        </div>
+                        <button class="send-button" id="sendButton" aria-label="Отправить сообщение">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="features-bar">
+                        <button class="feature-button" onclick="insertQuickQuestion('Нужна помощь с заводом в Москве')">
+                            <i class="fas fa-industry"></i>
+                            <span>Промышленный объект</span>
+                        </button>
+                        <button class="feature-button" onclick="insertQuickQuestion('Строим складской комплекс')">
+                            <i class="fas fa-warehouse"></i>
+                            <span>Складской комплекс</span>
+                        </button>
+                        <button class="feature-button" onclick="insertQuickQuestion('Экспресс-аудит документации')">
+                            <i class="fas fa-search"></i>
+                            <span>Экспресс-аудит</span>
+                        </button>
+                        <button class="feature-button" onclick="clearChat()">
+                            <i class="fas fa-trash"></i>
+                            <span>Очистить чат</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Welcome Modal -->
+    <div class="welcome-modal" id="welcomeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div style="font-family: 'Montserrat', sans-serif; font-weight: 700; color: var(--primary-blue); font-size: 2rem; margin-bottom: 1rem;">
+                    ВЕРИДИА
+                </div>
+                <h2>Добро пожаловать в ИИ-чат Веридиа! 🏗️</h2>
+                <p>Общайтесь с ИИ-агентом для решения вопросов по строительной документации</p>
+            </div>
+            <div class="modal-body">
+                <p>Я — Алексей, ваш виртуальный помощник. Помогу:</p>
+                <div class="modal-features">
+                    <div class="modal-feature">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Квалифицировать ваш строительный проект</span>
+                    </div>
+                    <div class="modal-feature">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Предложить экспресс-аудит документации</span>
+                    </div>
+                    <div class="modal-feature">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Собрать информацию для коммерческого предложения</span>
+                    </div>
+                    <div class="modal-feature">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Ответить на вопросы по ИД и ПТО</span>
+                    </div>
+                </div>
+                <p><strong>Важно:</strong> Мы работаем только с крупными промышленными, инфраструктурными и коммерческими объектами.</p>
+                <p><em>Для начала работы нажмите "Начать общение"</em></p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-button secondary" onclick="closeWelcomeModal()">
+                    Позже
+                </button>
+                <button class="modal-button primary" onclick="startChat()">
+                    Начать общение
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== КОНФИГУРАЦИЯ ====================
+        const CONFIG = {
+            // ⚠️ ЗАМЕНИТЕ НА ВАШ РЕАЛЬНЫЙ URL n8n СЕРВЕРА
+            webhookUrl: 'https://ВАШ-N8N-СЕРВЕР/veridia-webhook',
+            sessionId: null,
+            userId: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            userName: 'Гость',
+            maxMessageLength: 2000,
+            autoSaveInterval: 30000,
+            showWelcomeModal: true
+        };
+
+        // ==================== ЭЛЕМЕНТЫ DOM ====================
+        const elements = {
+            messagesContainer: document.getElementById('messagesContainer'),
+            messageInput: document.getElementById('messageInput'),
+            sendButton: document.getElementById('sendButton'),
+            typingIndicator: document.getElementById('typingIndicator'),
+            progressContainer: document.getElementById('progressContainer'),
+            progressName: document.getElementById('progressName'),
+            progressPhone: document.getElementById('progressPhone'),
+            progressEmail: document.getElementById('progressEmail'),
+            progressProject: document.getElementById('progressProject'),
+            welcomeModal: document.getElementById('welcomeModal'),
+            charCount: document.getElementById('charCount'),
+            initTime: document.getElementById('initTime'),
+            connectionStatus: document.getElementById('connectionStatus')
+        };
+
+        // ==================== ИНИЦИАЛИЗАЦИЯ ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            // Установка времени в приветственном сообщении
+            elements.initTime.textContent = getCurrentTime();
+            
+            // Настройка ввода сообщения
+            setupMessageInput();
+            
+            // Восстановление сессии
+            restoreSession();
+            
+            // Проверка соединения
+            checkConnection();
+            
+            // Проверка, показывать ли приветственное окно
+            if (CONFIG.showWelcomeModal && !getCookie('welcomeModalShown')) {
+                elements.welcomeModal.classList.remove('hidden');
+            } else {
+                focusInput();
+            }
+            
+            // Автосохранение
+            startAutoSave();
+        });
+
+        // ==================== ФУНКЦИИ УТИЛИТЫ ====================
+        function getCurrentTime() {
+            const now = new Date();
+            return now.getHours().toString().padStart(2, '0') + ':' + 
+                   now.getMinutes().toString().padStart(2, '0');
+        }
+
+       
