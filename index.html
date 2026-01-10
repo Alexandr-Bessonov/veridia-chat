@@ -978,7 +978,7 @@
     </style>
 </head>
 <body>
-    <!-- Connection Status Indicator -->
+    <!-- Connection Status Indicator - СКРЫТ ПО УМОЛЧАНИЮ -->
     <div class="connection-status hidden" id="connectionStatus">
         <i class="fas fa-wifi"></i>
         <span>Соединение...</span>
@@ -1248,7 +1248,7 @@
     <script>
         // ==================== КОНФИГУРАЦИЯ ====================
         const CONFIG = {
-            // ИСПРАВЛЕННЫЙ URL WEBHOOK - теперь совпадает с n8n workflow
+            // ИСПРАВЛЕННЫЙ URL - должно работать с POST
             webhookUrl: 'https://bessonov-test.ru/webhook/veridia-webhook',
             sessionId: null,
             userId: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -1289,8 +1289,8 @@
             // Восстановление сессии
             restoreSession();
             
-            // Проверка соединения (исправленная функция)
-            checkConnection();
+            // НЕ ПРОВЕРЯЕМ СОЕДИНЕНИЕ ПРИ ЗАГРУЗКЕ!
+            // checkConnection(); // УДАЛЕНО!
             
             // Проверка, показывать ли приветственное окно
             if (CONFIG.showWelcomeModal && !getCookie('welcomeModalShown')) {
@@ -1304,9 +1304,6 @@
             
             // Автосохранение
             startAutoSave();
-            
-            // Глобальная обработка ошибок
-            setupGlobalErrorHandling();
         });
 
         // ==================== ФУНКЦИИ УТИЛИТЫ ====================
@@ -1346,31 +1343,42 @@
 
         function showConnectionStatus(status) {
             const statusElement = elements.connectionStatus;
-            const isConnected = status === 'connected';
             
-            statusElement.className = `connection-status ${status}`;
-            statusElement.querySelector('i').className = isConnected ? 'fas fa-wifi' : 'fas fa-exclamation-triangle';
-            statusElement.querySelector('span').textContent = isConnected ? 'Соединение установлено' : 'Нет соединения';
-            
-            statusElement.classList.remove('hidden');
-            
-            if (isConnected) {
+            if (status === 'connected') {
+                statusElement.className = 'connection-status connected';
+                statusElement.querySelector('i').className = 'fas fa-wifi';
+                statusElement.querySelector('span').textContent = 'Соединение установлено';
+                
+                // Автоматически скрываем через 3 секунды
                 setTimeout(() => {
                     statusElement.classList.add('hidden');
                 }, 3000);
+            } else {
+                statusElement.className = 'connection-status disconnected';
+                statusElement.querySelector('i').className = 'fas fa-exclamation-triangle';
+                statusElement.querySelector('span').textContent = 'Нет соединения';
             }
+            
+            statusElement.classList.remove('hidden');
         }
 
+        // УПРОЩЕННАЯ проверка соединения - используем простой POST
         async function checkConnection() {
             try {
-                // Используем HEAD запрос вместо OPTIONS (более надежно)
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 5000);
                 
                 const response = await fetch(CONFIG.webhookUrl, {
-                    method: 'HEAD',
-                    mode: 'cors',
-                    signal: controller.signal
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        test: 'connection',
+                        timestamp: new Date().toISOString()
+                    }),
+                    signal: controller.signal,
+                    mode: 'cors'
                 });
                 
                 clearTimeout(timeoutId);
@@ -1383,7 +1391,7 @@
                     return false;
                 }
             } catch (error) {
-                console.warn('Проверка соединения: сервер недоступен', error);
+                console.log('Проверка соединения: сервер недоступен', error);
                 showConnectionStatus('disconnected');
                 return false;
             }
@@ -1394,20 +1402,6 @@
             if (agreed) {
                 elements.privacyCheckbox.checked = true;
             }
-        }
-
-        function setupGlobalErrorHandling() {
-            // Глобальный обработчик ошибок
-            window.addEventListener('error', (e) => {
-                console.error('Global error:', e);
-                showConnectionStatus('disconnected');
-            });
-
-            // Обработчик необработанных промисов
-            window.addEventListener('unhandledrejection', (e) => {
-                console.error('Unhandled promise rejection:', e);
-                showConnectionStatus('disconnected');
-            });
         }
 
         // ==================== УПРАВЛЕНИЕ ЧАТОМ ====================
@@ -1457,7 +1451,6 @@
             if (!data) return;
             
             const collected = data.collected_data || data.session_data?.collected_data || {};
-            const missing = data.missing_fields || {};
             
             // Показываем индикатор прогресса, если есть хоть какие-то данные
             if (Object.keys(collected).length > 0) {
@@ -1484,8 +1477,7 @@
                             icon.className = 'progress-icon completed';
                             icon.innerHTML = `<i class="fas fa-check"></i>`;
                             text.className = 'progress-text completed';
-                            const fieldName = text.textContent.split(':')[0];
-                            text.textContent = value.length > 20 ? `${fieldName}: ✓` : `${fieldName}: ${value}`;
+                            text.textContent = text.textContent.split(':')[0] + ': ✓';
                         } else {
                             icon.className = 'progress-icon pending';
                             icon.innerHTML = `<i class="fas fa-${item.icon}"></i>`;
@@ -1572,16 +1564,10 @@
             scrollToBottom();
             
             try {
-                // Проверяем соединение перед отправкой
-                const isConnected = await checkConnection();
-                if (!isConnected) {
-                    throw new Error('Нет соединения с сервером');
-                }
-                
-                // Подготовка данных для отправки в УПРОЩЕННОМ формате
+                // Подготовка данных для отправки
                 const sessionData = getSessionData() || {};
                 const requestData = {
-                    message: message, // Единое поле сообщения
+                    message: message,
                     user_id: CONFIG.userId,
                     session_id: CONFIG.sessionId,
                     name: CONFIG.userName,
@@ -1594,7 +1580,7 @@
                 
                 // Отправка запроса с таймаутом
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                const timeoutId = setTimeout(() => controller.abort(), 15000);
                 
                 const response = await fetch(CONFIG.webhookUrl, {
                     method: 'POST',
@@ -1603,7 +1589,8 @@
                         'Accept': 'application/json'
                     },
                     body: JSON.stringify(requestData),
-                    signal: controller.signal
+                    signal: controller.signal,
+                    mode: 'cors'
                 });
                 
                 clearTimeout(timeoutId);
@@ -1619,11 +1606,10 @@
                 const result = await response.json();
                 console.log('Получен ответ:', result);
                 
-                // УНИФИЦИРОВАННАЯ обработка ответа
+                // Обработка ответа
                 let aiResponse = '';
                 let responseData = {};
                 
-                // Проверяем различные форматы ответа
                 if (result && result.body) {
                     // Основной формат от "Форматирование ответа"
                     aiResponse = result.body.text || result.body.message || 'Принято';
@@ -1635,18 +1621,15 @@
                         console.log('Session ID установлен:', CONFIG.sessionId);
                         saveSessionData({ session_id: CONFIG.sessionId });
                     }
-                    
                 } else if (result && result.response) {
                     // Альтернативный формат
                     aiResponse = result.response;
                     responseData = result;
-                    
                 } else if (result && result.ai_response) {
                     aiResponse = result.ai_response;
                     responseData = result;
                 } else {
                     aiResponse = 'Принято. Чем еще могу помочь?';
-                    responseData = result || {};
                 }
                 
                 // Сохраняем данные сессии, если есть
@@ -1656,6 +1639,9 @@
                 
                 // Добавляем ответ ИИ
                 addMessage(aiResponse, 'assistant', responseData);
+                
+                // Показываем статус соединения - УСПЕХ!
+                showConnectionStatus('connected');
                 
                 // Проверяем, завершен ли диалог
                 if (responseData.continue_conversation === false) {
@@ -1667,36 +1653,29 @@
                     focusInput();
                 }
                 
-                // Показываем статус соединения
-                showConnectionStatus('connected');
-                
             } catch (error) {
                 console.error('Ошибка отправки сообщения:', error);
                 
                 // Определяем тип ошибки для пользовательского сообщения
-                let errorMessage = '';
+                let errorMessage = '⚠️ **Произошла ошибка**<br>Пожалуйста, попробуйте еще раз.';
                 
                 if (error.name === 'AbortError' || error.message.includes('timeout')) {
-                    errorMessage = '⚠️ **Таймаут запроса**<br>Сервер не отвечает в течение 10 секунд. Пожалуйста, попробуйте позже.';
+                    errorMessage = '⚠️ **Таймаут запроса**<br>Сервер не отвечает. Попробуйте позже.';
                 } else if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
-                    errorMessage = '⚠️ **Ошибка сети**<br>Проверьте подключение к интернету и попробуйте снова.';
-                } else if (error.message.includes('CORS')) {
-                    errorMessage = '⚠️ **Проблема с настройками CORS**<br>Пожалуйста, сообщите администратору.';
+                    errorMessage = '⚠️ **Ошибка сети**<br>Проверьте подключение к интернету.';
                 } else if (error.message.includes('404')) {
-                    errorMessage = '⚠️ **Webhook не найден**<br>Проверьте URL вебхука: ' + CONFIG.webhookUrl;
-                } else if (error.message.includes('500')) {
-                    errorMessage = '⚠️ **Ошибка сервера**<br>Пожалуйста, попробуйте позже.';
-                } else {
-                    errorMessage = `⚠️ **Произошла ошибка**<br>${error.message || 'Пожалуйста, попробуйте еще раз позже.'}`;
+                    errorMessage = '⚠️ **Webhook не найден**<br>Проверьте настройки сервера.';
                 }
                 
                 addMessage(errorMessage, 'assistant');
+                
+                // Показываем статус соединения - ОШИБКА!
+                showConnectionStatus('disconnected');
                 
                 // Восстанавливаем интерфейс даже при ошибке
                 elements.sendButton.disabled = false;
                 elements.messageInput.disabled = false;
                 focusInput();
-                showConnectionStatus('disconnected');
                 
             } finally {
                 // Всегда скрываем индикатор набора
@@ -1781,8 +1760,7 @@
                     // Восстанавливаем прогресс
                     if (savedSession.collected_data) {
                         updateProgressIndicator({
-                            collected_data: savedSession.collected_data,
-                            missing_fields: savedSession.missing_fields || {}
+                            collected_data: savedSession.collected_data
                         });
                     }
                     
@@ -1888,26 +1866,30 @@
             addMessage('История чата была очищена. Теперь начнем новый диалог. Расскажите о вашем проекте.', 'assistant');
         }
 
-        // ==================== ТЕСТОВЫЕ ФУНКЦИИ ====================
-        function testWebhookConnection() {
-            console.log('Тестирование подключения к:', CONFIG.webhookUrl);
+        // ==================== ТЕСТОВАЯ ФУНКЦИЯ ====================
+        function testWebhook() {
+            console.log('Тестирование webhook...');
             
             fetch(CONFIG.webhookUrl, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({test: 'ping', user_id: 'test_user'})
+                body: JSON.stringify({
+                    message: 'Тестовое сообщение',
+                    user_id: 'test_user',
+                    name: 'Тест'
+                })
             })
             .then(r => {
                 console.log('Статус:', r.status);
-                return r.text();
+                return r.json();
             })
-            .then(text => {
-                console.log('Ответ:', text);
-                alert('Ответ сервера: ' + text.substring(0, 200));
+            .then(data => {
+                console.log('Ответ:', data);
+                alert('Webhook работает! Статус: ' + r.status);
             })
             .catch(err => {
-                console.error('Ошибка теста:', err);
-                alert('Ошибка подключения: ' + err.message);
+                console.error('Ошибка:', err);
+                alert('Ошибка: ' + err.message);
             });
         }
 
@@ -1919,7 +1901,7 @@
         window.startChat = startChat;
         window.showPrivacyModal = showPrivacyModal;
         window.closePrivacyModal = closePrivacyModal;
-        window.testWebhookConnection = testWebhookConnection; // Для отладки
+        window.testWebhook = testWebhook;
     </script>
 </body>
 </html>
