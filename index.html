@@ -553,6 +553,89 @@
             color: white;
         }
 
+        /* Privacy Agreement */
+        .privacy-agreement {
+            padding: 1rem 2rem;
+            background: rgba(0, 61, 166, 0.05);
+            border-top: 1px solid var(--border-color);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .privacy-checkbox {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .privacy-checkbox input {
+            margin-top: 0.125rem;
+        }
+
+        .privacy-text {
+            font-size: 0.75rem;
+            line-height: 1.4;
+        }
+
+        .privacy-link {
+            color: var(--primary-blue);
+            text-decoration: none;
+            border-bottom: 1px dotted var(--primary-blue);
+            cursor: pointer;
+        }
+
+        .privacy-link:hover {
+            color: var(--dark-blue);
+            border-bottom: 1px solid var(--dark-blue);
+        }
+
+        /* Privacy Modal */
+        .privacy-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(33, 18, 97, 0.8);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .privacy-modal .modal-content {
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .privacy-content {
+            font-family: 'Roboto', sans-serif;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+
+        .privacy-content h3 {
+            font-family: 'Montserrat', sans-serif;
+            color: var(--primary-blue);
+            margin: 1.5rem 0 0.75rem 0;
+            font-size: 1rem;
+        }
+
+        .privacy-content p {
+            margin-bottom: 0.75rem;
+        }
+
+        .privacy-content ul {
+            margin-left: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
         /* Welcome Modal */
         .welcome-modal {
             position: fixed;
@@ -725,6 +808,17 @@
             }
         }
 
+        /* Footer */
+        .chat-footer {
+            padding: 0.75rem 2rem;
+            background: var(--light-bg);
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            font-family: 'Roboto', sans-serif;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .page-container {
@@ -765,6 +859,10 @@
                 padding: 1rem;
             }
             
+            .privacy-agreement {
+                padding: 0.75rem 1rem;
+            }
+            
             .progress-container {
                 padding: 1rem;
             }
@@ -781,7 +879,8 @@
                 font-size: 1.25rem;
             }
             
-            .welcome-modal {
+            .welcome-modal,
+            .privacy-modal {
                 padding: 10px;
             }
             
@@ -798,6 +897,11 @@
                 right: 10px;
                 font-size: 0.75rem;
                 padding: 0.5rem 1rem;
+            }
+            
+            .chat-footer {
+                padding: 0.5rem 1rem;
+                font-size: 0.7rem;
             }
         }
 
@@ -993,6 +1097,19 @@
                     </div>
                 </div>
 
+                <!-- Privacy Agreement -->
+                <div class="privacy-agreement" id="privacyAgreement">
+                    <div class="privacy-checkbox">
+                        <input type="checkbox" id="privacyCheckbox">
+                        <label for="privacyCheckbox" class="privacy-text">
+                            Я соглашаюсь с 
+                            <a href="#" class="privacy-link" onclick="showPrivacyModal(event)">Политикой конфиденциальности</a> 
+                            и даю согласие на обработку моих персональных данных в соответствии с 
+                            Федеральным законом № 152-ФЗ "О персональных данных"
+                        </label>
+                    </div>
+                </div>
+
                 <!-- Input Area -->
                 <div class="input-container">
                     <div class="input-wrapper">
@@ -1032,6 +1149,12 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Footer -->
+            <div class="chat-footer">
+                © 2024 ООО «Веридиа». Все права защищены. 
+                <a href="#" class="privacy-link" onclick="showPrivacyModal(event)">Политика конфиденциальности</a>
+            </div>
         </div>
     </div>
 
@@ -1069,11 +1192,78 @@
                 <p><em>Для начала работы нажмите "Начать общение"</em></p>
             </div>
             <div class="modal-footer">
-                <button class="modal-button secondary" id="closeModalBtn">
+                <button class="modal-button secondary" onclick="closeWelcomeModal()">
                     Позже
                 </button>
-                <button class="modal-button primary" id="startChatBtn">
+                <button class="modal-button primary" onclick="startChat()">
                     Начать общение
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Privacy Modal -->
+    <div class="privacy-modal hidden" id="privacyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Политика конфиденциальности</h2>
+                <p>ООО «Веридиа»</p>
+            </div>
+            <div class="privacy-content">
+                <h3>1. Общие положения</h3>
+                <p>Настоящая Политика конфиденциальности (далее — Политика) действует в отношении всей информации, которую ООО «Веридиа» (далее — Компания) может получить о Пользователе во время использования чат-бота.</p>
+                
+                <h3>2. Цели сбора и обработки персональных данных</h3>
+                <p>Компания осуществляет обработку персональных данных Пользователя в следующих целях:</p>
+                <ul>
+                    <li>Идентификация Пользователя для предоставления консультационных услуг</li>
+                    <li>Подготовка коммерческих предложений и расчетов</li>
+                    <li>Связь с Пользователем для уточнения деталей проекта</li>
+                    <li>Информирование о новых услугах и акциях Компании</li>
+                </ul>
+                
+                <h3>3. Состав персональных данных</h3>
+                <p>Компания может обрабатывать следующие персональные данные Пользователя:</p>
+                <ul>
+                    <li>Фамилия, имя, отчество</li>
+                    <li>Контактный телефон</li>
+                    <li>Адрес электронной почты</li>
+                    <li>Информация о строительном проекте</li>
+                </ul>
+                
+                <h3>4. Правовые основания обработки</h3>
+                <p>Обработка персональных данных осуществляется на основании:</p>
+                <ul>
+                    <li>Согласия субъекта персональных данных (статья 9 Федерального закона от 27.07.2006 № 152-ФЗ)</li>
+                    <li>Заключения и исполнения договора (статья 6 Федерального закона от 27.07.2006 № 152-ФЗ)</li>
+                </ul>
+                
+                <h3>5. Сроки хранения персональных данных</h3>
+                <p>Персональные данные Пользователя хранятся в течение 5 лет с момента последнего взаимодействия, если иное не предусмотрено законодательством РФ.</p>
+                
+                <h3>6. Права субъекта персональных данных</h3>
+                <p>Пользователь имеет право:</p>
+                <ul>
+                    <li>На доступ к своим персональным данным</li>
+                    <li>На уточнение, блокирование или уничтожение своих персональных данных</li>
+                    <li>На отзыв согласия на обработку персональных данных</li>
+                    <li>На обжалование действий или бездействия Компании в уполномоченный орган</li>
+                </ul>
+                
+                <h3>7. Контактная информация</h3>
+                <p>По вопросам обработки персональных данных обращаться:</p>
+                <p><strong>ООО «Веридиа»</strong><br>
+                Телефон: +7 (495) 123-45-67<br>
+                Email: privacy@veridia.ru<br>
+                Адрес: 115191, г. Москва, ул. Хамовнический Вал, д. 34</p>
+                
+                <h3>8. Заключительные положения</h3>
+                <p>Настоящая Политика может изменяться Компанией. Новая редакция Политики вступает в силу с момента ее размещения на сайте.</p>
+                <p>Дата последнего обновления: 10 января 2024 года</p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-button primary" onclick="closePrivacyModal()">
+                    Закрыть
                 </button>
             </div>
         </div>
@@ -1082,7 +1272,7 @@
     <script>
         // ==================== КОНФИГУРАЦИЯ ====================
         const CONFIG = {
-            // ⚠️ ЗАМЕНИТЕ НА ВАШ РЕАЛЬНЫЙ URL n8n СЕРВЕРА
+            // Реальный webhook URL
             webhookUrl: 'https://bessonov-test.ru/webhook-test/veridia-webhook',
             sessionId: null,
             userId: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -1104,11 +1294,12 @@
             progressEmail: document.getElementById('progressEmail'),
             progressProject: document.getElementById('progressProject'),
             welcomeModal: document.getElementById('welcomeModal'),
+            privacyModal: document.getElementById('privacyModal'),
+            privacyCheckbox: document.getElementById('privacyCheckbox'),
+            privacyAgreement: document.getElementById('privacyAgreement'),
             charCount: document.getElementById('charCount'),
             initTime: document.getElementById('initTime'),
-            connectionStatus: document.getElementById('connectionStatus'),
-            closeModalBtn: document.getElementById('closeModalBtn'),
-            startChatBtn: document.getElementById('startChatBtn')
+            connectionStatus: document.getElementById('connectionStatus')
         };
 
         // ==================== ИНИЦИАЛИЗАЦИЯ ====================
@@ -1118,9 +1309,6 @@
             
             // Настройка ввода сообщения
             setupMessageInput();
-            
-            // Настройка обработчиков для модального окна
-            setupModalHandlers();
             
             // Восстановление сессии
             restoreSession();
@@ -1135,8 +1323,554 @@
                 focusInput();
             }
             
+            // Проверяем согласие на обработку данных
+            checkPrivacyAgreement();
+            
             // Автосохранение
             startAutoSave();
         });
 
-        // ==================== ФУНК
+        // ==================== ФУНКЦИИ УТИЛИТЫ ====================
+        function getCurrentTime() {
+            const now = new Date();
+            return now.getHours().toString().padStart(2, '0') + ':' + 
+                   now.getMinutes().toString().padStart(2, '0');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatMessage(text) {
+            return escapeHtml(text)
+                .replace(/\n/g, '<br>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>');
+        }
+
+        function setCookie(name, value, days) {
+            const date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = `${name}=${value};expires=${date.toUTCString()};path=/`;
+        }
+
+        function getCookie(name) {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [cookieName, cookieValue] = cookie.trim().split('=');
+                if (cookieName === name) return cookieValue;
+            }
+            return null;
+        }
+
+        function showConnectionStatus(status) {
+            const statusElement = elements.connectionStatus;
+            const isConnected = status === 'connected';
+            
+            statusElement.className = `connection-status ${status}`;
+            statusElement.querySelector('i').className = isConnected ? 'fas fa-wifi' : 'fas fa-exclamation-triangle';
+            statusElement.querySelector('span').textContent = isConnected ? 'Соединение установлено' : 'Нет соединения';
+            
+            statusElement.classList.remove('hidden');
+            
+            if (isConnected) {
+                setTimeout(() => {
+                    statusElement.classList.add('hidden');
+                }, 3000);
+            }
+        }
+
+        async function checkConnection() {
+            try {
+                // Простая проверка доступности сервера
+                const testUrl = CONFIG.webhookUrl.replace('/veridia-webhook', '') || CONFIG.webhookUrl;
+                await fetch(testUrl, { method: 'HEAD', mode: 'no-cors' });
+                showConnectionStatus('connected');
+            } catch (error) {
+                showConnectionStatus('disconnected');
+                console.warn('Проверка соединения: сервер недоступен');
+            }
+        }
+
+        function checkPrivacyAgreement() {
+            const agreed = getCookie('privacyAgreed') === 'true';
+            if (agreed) {
+                elements.privacyCheckbox.checked = true;
+            }
+        }
+
+        // ==================== УПРАВЛЕНИЕ ЧАТОМ ====================
+        function addMessage(text, sender = 'assistant', data = null) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const time = getCurrentTime();
+            
+            if (sender === 'user') {
+                messageDiv.innerHTML = `
+                    <div class="message-header">
+                        <div class="avatar">В</div>
+                        <div class="sender-info">
+                            <div class="sender-name">Вы</div>
+                        </div>
+                    </div>
+                    <div class="message-content">${formatMessage(text)}</div>
+                    <div class="message-time">${time}</div>
+                `;
+            } else {
+                messageDiv.innerHTML = `
+                    <div class="message-header">
+                        <div class="avatar">А</div>
+                        <div class="sender-info">
+                            <div class="sender-name">Алексей</div>
+                        </div>
+                    </div>
+                    <div class="message-content">${formatMessage(text)}</div>
+                    <div class="message-time">${time}</div>
+                `;
+            }
+            
+            elements.messagesContainer.appendChild(messageDiv);
+            scrollToBottom();
+            
+            // Обновление индикатора прогресса
+            if (data) {
+                updateProgressIndicator(data);
+            }
+            
+            // Сохранение в историю
+            saveMessageToHistory(text, sender, time, data);
+        }
+
+        function updateProgressIndicator(data) {
+            if (!data) return;
+            
+            const collected = data.collected_data || data.session_data?.collected_data || {};
+            const missing = data.missing_fields || {};
+            
+            // Показываем индикатор прогресса, если есть хоть какие-то данные
+            if (Object.keys(collected).length > 0) {
+                elements.progressContainer.classList.remove('hidden');
+                
+                // Обновляем каждый пункт прогресса
+                const progressItems = [
+                    { id: 'Name', key: 'name', icon: 'user' },
+                    { id: 'Phone', key: 'phone', icon: 'phone' },
+                    { id: 'Email', key: 'email', icon: 'envelope' },
+                    { id: 'Project', key: 'project_type', icon: 'building' }
+                ];
+                
+                progressItems.forEach(item => {
+                    const element = document.getElementById(`progress${item.id}`);
+                    if (element) {
+                        const hasValue = !!collected[item.key];
+                        const value = collected[item.key] || '';
+                        
+                        const icon = element.querySelector('.progress-icon');
+                        const text = element.querySelector('.progress-text');
+                        
+                        if (hasValue) {
+                            icon.className = 'progress-icon completed';
+                            icon.innerHTML = `<i class="fas fa-check"></i>`;
+                            text.className = 'progress-text completed';
+                            const fieldName = text.textContent.split(':')[0];
+                            text.textContent = value.length > 20 ? `${fieldName}: ✓` : `${fieldName}: ${value}`;
+                        } else {
+                            icon.className = 'progress-icon pending';
+                            icon.innerHTML = `<i class="fas fa-${item.icon}"></i>`;
+                            text.className = 'progress-text';
+                            text.textContent = text.textContent.split(':')[0];
+                        }
+                    }
+                });
+            }
+        }
+
+        function scrollToBottom() {
+            requestAnimationFrame(() => {
+                elements.messagesContainer.scrollTop = elements.messagesContainer.scrollHeight;
+            });
+        }
+
+        // ==================== ВВОД СООБЩЕНИЙ ====================
+        function setupMessageInput() {
+            // Автоматическое изменение высоты
+            elements.messageInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 160) + 'px';
+                elements.charCount.textContent = this.value.length;
+            });
+            
+            // Отправка по Enter (без Shift)
+            elements.messageInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            // Фокус на поле ввода при клике в любом месте чата
+            elements.messagesContainer.addEventListener('click', focusInput);
+        }
+
+        function focusInput() {
+            elements.messageInput.focus();
+        }
+
+        function insertQuickQuestion(text) {
+            elements.messageInput.value = text;
+            elements.messageInput.style.height = 'auto';
+            elements.messageInput.style.height = Math.min(elements.messageInput.scrollHeight, 160) + 'px';
+            elements.charCount.textContent = text.length;
+            focusInput();
+        }
+
+        // ==================== ОТПРАВКА СООБЩЕНИЙ ====================
+        async function sendMessage() {
+            // Проверяем согласие на обработку данных
+            if (!elements.privacyCheckbox.checked) {
+                alert('Для отправки сообщения необходимо согласиться с Политикой конфиденциальности');
+                elements.privacyCheckbox.focus();
+                return;
+            }
+            
+            const message = elements.messageInput.value.trim();
+            if (!message) {
+                return;
+            }
+            
+            if (message.length > CONFIG.maxMessageLength) {
+                alert(`Сообщение слишком длинное (максимум ${CONFIG.maxMessageLength} символов)`);
+                return;
+            }
+            
+            // Блокируем интерфейс
+            elements.sendButton.disabled = true;
+            elements.messageInput.disabled = true;
+            
+            // Добавляем сообщение пользователя
+            addMessage(message, 'user');
+            
+            // Очищаем поле ввода
+            elements.messageInput.value = '';
+            elements.messageInput.style.height = '56px';
+            elements.charCount.textContent = '0';
+            
+            // Показываем индикатор набора
+            elements.typingIndicator.classList.add('active');
+            scrollToBottom();
+            
+            try {
+                // Подготовка данных для отправки в формате n8n
+                const sessionData = getSessionData() || {};
+                const requestData = {
+                    message: message,
+                    text: message, // Дублируем для совместимости
+                    user_id: CONFIG.userId,
+                    session_id: CONFIG.sessionId,
+                    name: CONFIG.userName,
+                    from: {
+                        id: CONFIG.userId,
+                        first_name: CONFIG.userName
+                    },
+                    session_data: sessionData.session_data || sessionData,
+                    timestamp: new Date().toISOString()
+                };
+                
+                console.log('Отправка запроса:', requestData);
+                
+                // Отправка запроса с обработкой CORS
+                const response = await fetch(CONFIG.webhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('Получен ответ:', result);
+                
+                // Проверяем различные форматы ответа
+                let aiResponse = '';
+                let responseData = {};
+                
+                if (result && result.body) {
+                    // Основной формат от "Форматирование ответа"
+                    aiResponse = result.body.text || result.body.message || 'Принято';
+                    responseData = result.body.data || result.body;
+                    
+                    // Сохраняем session_id
+                    if (result.body.session_id) {
+                        CONFIG.sessionId = result.body.session_id;
+                        console.log('Session ID установлен:', CONFIG.sessionId);
+                    }
+                    
+                    // Сохраняем данные сессии
+                    if (result.body.session_data) {
+                        saveSessionData(result.body.session_data);
+                    } else if (result.body.data) {
+                        saveSessionData(result.body.data);
+                    }
+                    
+                } else if (result && result.response) {
+                    // Альтернативный формат
+                    aiResponse = result.response;
+                    responseData = result;
+                    
+                    if (result.session_data) {
+                        saveSessionData(result.session_data);
+                    }
+                    
+                } else {
+                    aiResponse = 'Принято. Чем еще могу помочь?';
+                }
+                
+                // Добавляем ответ ИИ
+                addMessage(aiResponse, 'assistant', responseData);
+                
+                // Проверяем, завершен ли диалог
+                if (responseData.continue_conversation === false) {
+                    disableChatInput('Диалог завершен. Спасибо за обращение!');
+                } else {
+                    // Восстанавливаем интерфейс для продолжения диалога
+                    elements.sendButton.disabled = false;
+                    elements.messageInput.disabled = false;
+                    focusInput();
+                }
+                
+                // Показываем статус соединения
+                showConnectionStatus('connected');
+                
+            } catch (error) {
+                console.error('Ошибка отправки сообщения:', error);
+                
+                // Определяем тип ошибки для пользовательского сообщения
+                let errorMessage = '';
+                
+                if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
+                    errorMessage = '⚠️ **Ошибка сети**<br>Проверьте подключение к интернету и попробуйте снова.';
+                    showConnectionStatus('disconnected');
+                } else if (error.message.includes('CORS')) {
+                    errorMessage = '⚠️ **Проблема с настройками сервера**<br>Пожалуйста, сообщите администратору.';
+                } else if (error.message.includes('404')) {
+                    errorMessage = '⚠️ **Сервер не найден**<br>Проверьте URL webhook в настройках.';
+                } else {
+                    errorMessage = '⚠️ **Произошла ошибка**<br>Пожалуйста, попробуйте еще раз позже.';
+                }
+                
+                addMessage(errorMessage, 'assistant');
+                
+                // Восстанавливаем интерфейс даже при ошибке
+                elements.sendButton.disabled = false;
+                elements.messageInput.disabled = false;
+                focusInput();
+                
+            } finally {
+                // Всегда скрываем индикатор набора
+                elements.typingIndicator.classList.remove('active');
+            }
+        }
+
+        function disableChatInput(placeholder = 'Диалог завершен') {
+            elements.messageInput.disabled = true;
+            elements.sendButton.disabled = true;
+            elements.messageInput.placeholder = placeholder;
+            
+            // Делаем все кнопки быстрых вопросов неактивными
+            document.querySelectorAll('.feature-button').forEach(btn => {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
+            });
+        }
+
+        // ==================== УПРАВЛЕНИЕ СЕССИЕЙ ====================
+        function getSessionData() {
+            try {
+                const saved = localStorage.getItem('veridia_chat_session');
+                return saved ? JSON.parse(saved) : {};
+            } catch (error) {
+                console.error('Ошибка чтения сессии:', error);
+                return {};
+            }
+        }
+
+        function saveSessionData(data) {
+            try {
+                const session = {
+                    ...data,
+                    session_id: CONFIG.sessionId,
+                    user_id: CONFIG.userId,
+                    user_name: CONFIG.userName,
+                    last_updated: new Date().toISOString()
+                };
+                
+                localStorage.setItem('veridia_chat_session', JSON.stringify(session));
+                console.log('Сессия сохранена:', session);
+            } catch (error) {
+                console.error('Ошибка сохранения сессии:', error);
+            }
+        }
+
+        function saveMessageToHistory(text, sender, time, data) {
+            try {
+                const history = JSON.parse(localStorage.getItem('veridia_chat_history') || '[]');
+                history.push({
+                    text,
+                    sender,
+                    time,
+                    data,
+                    timestamp: new Date().toISOString()
+                });
+                
+                // Храним только последние 50 сообщений
+                localStorage.setItem('veridia_chat_history', JSON.stringify(history.slice(-50)));
+            } catch (error) {
+                console.error('Ошибка сохранения истории:', error);
+            }
+        }
+
+        function restoreSession() {
+            try {
+                const savedSession = getSessionData();
+                
+                if (savedSession && savedSession.session_id) {
+                    CONFIG.sessionId = savedSession.session_id;
+                    CONFIG.userId = savedSession.user_id || CONFIG.userId;
+                    CONFIG.userName = savedSession.user_name || CONFIG.userName;
+                    
+                    console.log('Сессия восстановлена:', {
+                        sessionId: CONFIG.sessionId,
+                        userId: CONFIG.userId,
+                        userName: CONFIG.userName
+                    });
+                    
+                    // Восстанавливаем прогресс
+                    if (savedSession.collected_data) {
+                        updateProgressIndicator({
+                            collected_data: savedSession.collected_data,
+                            missing_fields: savedSession.missing_fields || {}
+                        });
+                    }
+                    
+                    // Проверяем, завершена ли предыдущая сессия
+                    if (savedSession.continue_conversation === false) {
+                        disableChatInput('Предыдущий диалог завершен. Начните новый.');
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка восстановления сессии:', error);
+            }
+        }
+
+        function startAutoSave() {
+            setInterval(() => {
+                if (CONFIG.sessionId) {
+                    const sessionData = getSessionData() || {};
+                    sessionData.last_activity = new Date().toISOString();
+                    sessionData.session_id = CONFIG.sessionId;
+                    sessionData.user_id = CONFIG.userId;
+                    sessionData.user_name = CONFIG.userName;
+                    saveSessionData(sessionData);
+                }
+            }, CONFIG.autoSaveInterval);
+        }
+
+        // ==================== УПРАВЛЕНИЕ МОДАЛЬНЫМИ ОКНАМИ ====================
+        function closeWelcomeModal() {
+            elements.welcomeModal.classList.add('hidden');
+            setCookie('welcomeModalShown', 'true', 7);
+            focusInput();
+        }
+
+        function startChat() {
+            elements.welcomeModal.classList.add('hidden');
+            setCookie('welcomeModalShown', 'true', 7);
+            focusInput();
+            
+            // Можно добавить дополнительное приветственное сообщение
+            setTimeout(() => {
+                addMessage(
+                    'Отлично! Теперь вы можете задать любой вопрос о строительной документации. ' +
+                    'Для начала расскажите кратко о вашем объекте — это промышленное здание, склад, ' +
+                    'офисный центр или другой тип объекта?',
+                    'assistant'
+                );
+            }, 500);
+        }
+
+        function showPrivacyModal(event) {
+            if (event) event.preventDefault();
+            elements.privacyModal.classList.remove('hidden');
+        }
+
+        function closePrivacyModal() {
+            elements.privacyModal.classList.add('hidden');
+            
+            // При закрытии модального окна ставим галочку согласия
+            if (!elements.privacyCheckbox.checked) {
+                elements.privacyCheckbox.checked = true;
+                setCookie('privacyAgreed', 'true', 365);
+            }
+        }
+
+        // ==================== ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ ====================
+        function clearChat() {
+            if (!confirm('Вы уверены, что хотите очистить историю чата? Это действие нельзя отменить.')) {
+                return;
+            }
+            
+            // Очищаем сообщения, кроме первого приветственного
+            const messages = elements.messagesContainer.querySelectorAll('.message');
+            messages.forEach((msg, index) => {
+                if (index > 0) msg.remove();
+            });
+            
+            // Очищаем историю в localStorage
+            localStorage.removeItem('veridia_chat_history');
+            localStorage.removeItem('veridia_chat_session');
+            
+            // Сбрасываем сессию
+            CONFIG.sessionId = null;
+            CONFIG.userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            
+            // Скрываем индикатор прогресса
+            elements.progressContainer.classList.add('hidden');
+            
+            // Восстанавливаем поле ввода
+            elements.messageInput.disabled = false;
+            elements.sendButton.disabled = false;
+            elements.messageInput.placeholder = 'Напишите ваш вопрос о строительной документации...';
+            
+            // Восстанавливаем кнопки быстрых вопросов
+            document.querySelectorAll('.feature-button').forEach(btn => {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+            });
+            
+            focusInput();
+            
+            // Добавляем сообщение о очистке
+            addMessage('История чата была очищена. Теперь начнем новый диалог. Расскажите о вашем проекте.', 'assistant');
+        }
+
+        // ==================== ЭКСПОРТ ФУНКЦИЙ ====================
+        window.sendMessage = sendMessage;
+        window.insertQuickQuestion = insertQuickQuestion;
+        window.clearChat = clearChat;
+        window.closeWelcomeModal = closeWelcomeModal;
+        window.startChat = startChat;
+        window.showPrivacyModal = showPrivacyModal;
+        window.closePrivacyModal = closePrivacyModal;
+    </script>
+</body>
+</html>
