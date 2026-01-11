@@ -14,11 +14,11 @@
     <style>
         :root {
             /* Основные цвета из гайдлайна Веридиа */
-            --primary-green: #93D500;       /* PANTONE 375 C */
-            --secondary-green: #6EAF2A;     /* Более темный зеленый */
-            --primary-blue: #003DA6;        /* PANTONE 293 C */
-            --dark-blue: #211261;           /* PANTONE 2755 C */
-            --violet: #409986;              /* PANTONE Violet (адаптированный) */
+            --primary-green: #93D500;
+            --secondary-green: #6EAF2A;
+            --primary-blue: #003DA6;
+            --dark-blue: #211261;
+            --violet: #409986;
             --light-bg: #f8fafc;
             --card-bg: #ffffff;
             --text-primary: #1e293b;
@@ -401,6 +401,7 @@
             font-weight: 500;
             color: var(--text-secondary);
             transition: all 0.3s ease;
+            min-width: 100px;
         }
 
         .progress-text.completed {
@@ -500,40 +501,6 @@
 
         .send-button:not(:disabled):hover i {
             transform: translateX(2px);
-        }
-
-        /* Features Bar */
-        .features-bar {
-            display: flex;
-            gap: 0.75rem;
-            margin-top: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .feature-button {
-            padding: 0.5rem 1rem;
-            background: white;
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
-            font-family: 'Roboto', sans-serif;
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .feature-button:hover {
-            background: var(--primary-blue);
-            border-color: var(--primary-blue);
-            color: white;
-            transform: translateY(-1px);
-        }
-
-        .feature-button:hover i {
-            color: white;
         }
 
         /* Privacy Agreement */
@@ -920,19 +887,6 @@
                 font-size: 0.75rem;
             }
             
-            .features-bar {
-                justify-content: center;
-            }
-            
-            .feature-button span {
-                display: none;
-            }
-            
-            .feature-button {
-                padding: 0.5rem;
-                border-radius: 50%;
-            }
-            
             .connection-status {
                 top: 5px;
                 right: 5px;
@@ -978,7 +932,7 @@
     </style>
 </head>
 <body>
-    <!-- Connection Status Indicator - СКРЫТ ПО УМОЛЧАНИЮ -->
+    <!-- Connection Status Indicator -->
     <div class="connection-status hidden" id="connectionStatus">
         <i class="fas fa-wifi"></i>
         <span>Соединение...</span>
@@ -1040,7 +994,7 @@
                     </div>
                 </div>
 
-                <!-- Progress Indicator -->
+                <!-- Progress Indicator - ИСПРАВЛЕННАЯ ЛОГИКА -->
                 <div class="progress-container hidden" id="progressContainer">
                     <div class="progress-title">
                         <i class="fas fa-chart-line"></i>
@@ -1051,25 +1005,25 @@
                             <div class="progress-icon pending">
                                 <i class="fas fa-user"></i>
                             </div>
-                            <span class="progress-text">Имя</span>
+                            <span class="progress-text">Имя: не указано</span>
                         </div>
                         <div class="progress-item" id="progressPhone">
                             <div class="progress-icon pending">
                                 <i class="fas fa-phone"></i>
                             </div>
-                            <span class="progress-text">Телефон</span>
+                            <span class="progress-text">Телефон: не указан</span>
                         </div>
                         <div class="progress-item" id="progressEmail">
                             <div class="progress-icon pending">
                                 <i class="fas fa-envelope"></i>
                             </div>
-                            <span class="progress-text">Email</span>
+                            <span class="progress-text">Email: не указан</span>
                         </div>
                         <div class="progress-item" id="progressProject">
                             <div class="progress-icon pending">
                                 <i class="fas fa-building"></i>
                             </div>
-                            <span class="progress-text">Тип проекта</span>
+                            <span class="progress-text">Тип проекта: не указан</span>
                         </div>
                     </div>
                 </div>
@@ -1106,24 +1060,7 @@
                         </button>
                     </div>
                     
-                    <div class="features-bar">
-                        <button class="feature-button" onclick="insertQuickQuestion('Нужна помощь с заводом в Москве')">
-                            <i class="fas fa-industry"></i>
-                            <span>Промышленный объект</span>
-                        </button>
-                        <button class="feature-button" onclick="insertQuickQuestion('Строим складской комплекс')">
-                            <i class="fas fa-warehouse"></i>
-                            <span>Складской комплекс</span>
-                        </button>
-                        <button class="feature-button" onclick="insertQuickQuestion('Экспресс-аудит документации')">
-                            <i class="fas fa-search"></i>
-                            <span>Экспресс-аудит</span>
-                        </button>
-                        <button class="feature-button" onclick="clearChat()">
-                            <i class="fas fa-trash"></i>
-                            <span>Очистить чат</span>
-                        </button>
-                    </div>
+                    <!-- Убраны быстрые кнопки для экономии места -->
                 </div>
             </div>
 
@@ -1281,6 +1218,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             elements.initTime.textContent = getCurrentTime();
             setupMessageInput();
+            setupSendButton(); // ИСПРАВЛЕНИЕ: настройка кнопки отправки
             restoreSession();
             checkPrivacyAgreement();
             startAutoSave();
@@ -1320,6 +1258,11 @@
                 if (cookieName === name) return cookieValue;
             }
             return null;
+        }
+
+        // ==================== ИСПРАВЛЕНИЕ: НАСТРОЙКА КНОПКИ ОТПРАВКИ ====================
+        function setupSendButton() {
+            elements.sendButton.addEventListener('click', sendMessage);
         }
 
         // ==================== УПРАВЛЕНИЕ ЧАТОМ ====================
@@ -1363,43 +1306,45 @@
             saveMessageToHistory(text, sender, time, data);
         }
 
+        // ==================== ИСПРАВЛЕННАЯ ФУНКЦИЯ ОБНОВЛЕНИЯ ПРОГРЕССА ====================
         function updateProgressIndicator(data) {
             if (!data) return;
             
+            // Получаем собранные данные из ответа сервера
             const collected = data.collected_data || data.session_data?.collected_data || {};
+            const missingFields = data.missing_fields || {};
             
-            if (Object.keys(collected).length > 0) {
+            if (Object.keys(collected).length > 0 || Object.keys(missingFields).length > 0) {
                 elements.progressContainer.classList.remove('hidden');
                 
-                const progressItems = [
-                    { id: 'Name', key: 'name', icon: 'user' },
-                    { id: 'Phone', key: 'phone', icon: 'phone' },
-                    { id: 'Email', key: 'email', icon: 'envelope' },
-                    { id: 'Project', key: 'project_type', icon: 'building' }
-                ];
-                
-                progressItems.forEach(item => {
-                    const element = document.getElementById(`progress${item.id}`);
+                // Обновляем каждый элемент прогресса
+                const updateProgressItem = (itemId, fieldName, displayName, value, isMissing) => {
+                    const element = document.getElementById(itemId);
                     if (element) {
-                        const hasValue = !!collected[item.key];
-                        const value = collected[item.key] || '';
-                        
                         const icon = element.querySelector('.progress-icon');
                         const text = element.querySelector('.progress-text');
+                        
+                        const hasValue = value && value.trim() !== '' && value !== 'Гость';
                         
                         if (hasValue) {
                             icon.className = 'progress-icon completed';
                             icon.innerHTML = `<i class="fas fa-check"></i>`;
                             text.className = 'progress-text completed';
-                            text.textContent = text.textContent.split(':')[0] + ': ✓';
+                            text.textContent = `${displayName}: ${value}`;
                         } else {
                             icon.className = 'progress-icon pending';
-                            icon.innerHTML = `<i class="fas fa-${item.icon}"></i>`;
+                            icon.innerHTML = `<i class="fas fa-${fieldName === 'name' ? 'user' : fieldName === 'phone' ? 'phone' : fieldName === 'email' ? 'envelope' : 'building'}"></i>`;
                             text.className = 'progress-text';
-                            text.textContent = text.textContent.split(':')[0];
+                            text.textContent = `${displayName}: не указан${fieldName === 'email' ? 'а' : 'о'}`;
                         }
                     }
-                });
+                };
+                
+                // Обновляем все элементы
+                updateProgressItem('progressName', 'name', 'Имя', collected.name, missingFields.name);
+                updateProgressItem('progressPhone', 'phone', 'Телефон', collected.phone, missingFields.phone);
+                updateProgressItem('progressEmail', 'email', 'Email', collected.email, missingFields.email);
+                updateProgressItem('progressProject', 'project_type', 'Тип проекта', collected.project_type, missingFields.project_type);
             }
         }
 
@@ -1431,15 +1376,7 @@
             elements.messageInput.focus();
         }
 
-        function insertQuickQuestion(text) {
-            elements.messageInput.value = text;
-            elements.messageInput.style.height = 'auto';
-            elements.messageInput.style.height = Math.min(elements.messageInput.scrollHeight, 160) + 'px';
-            elements.charCount.textContent = text.length;
-            focusInput();
-        }
-
-        // ==================== ИСПРАВЛЕННАЯ ФУНКЦИЯ ОТПРАВКИ ====================
+        // ==================== ОТПРАВКА СООБЩЕНИЙ ====================
         async function sendMessage() {
             if (!elements.privacyCheckbox.checked) {
                 alert('Для отправки сообщения необходимо согласиться с Политикой конфиденциальности');
@@ -1501,7 +1438,6 @@
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
                 
-                // ИСПРАВЛЕНИЕ: Читаем ответ как текст сначала
                 const responseText = await response.text();
                 console.log('Ответ сервера (текст):', responseText);
                 
@@ -1512,9 +1448,7 @@
                 } catch (e) {
                     console.error('Ошибка парсинга JSON:', e);
                     
-                    // Если ответ пустой, создаем дефолтный
                     if (!responseText.trim()) {
-                        console.warn('Пустой ответ от сервера, используем дефолтный');
                         result = {
                             body: {
                                 text: "Извините, произошла техническая ошибка. Пожалуйста, повторите вопрос.",
@@ -1523,18 +1457,16 @@
                             }
                         };
                     } else {
-                        // Пытаемся извлечь ошибку из текста
                         throw new Error(`Некорректный ответ от сервера: ${responseText.substring(0, 100)}`);
                     }
                 }
                 
-                // Обработка ответа
                 let aiResponse = '';
                 let responseData = {};
                 
                 if (result && result.body) {
                     aiResponse = result.body.text || result.body.message || 'Принято';
-                    responseData = result.body.data || result.body;
+                    responseData = result.body;
                     
                     if (result.body.session_id) {
                         CONFIG.sessionId = result.body.session_id;
@@ -1597,12 +1529,6 @@
             elements.messageInput.disabled = true;
             elements.sendButton.disabled = true;
             elements.messageInput.placeholder = placeholder;
-            
-            document.querySelectorAll('.feature-button').forEach(btn => {
-                btn.disabled = true;
-                btn.style.opacity = '0.5';
-                btn.style.cursor = 'not-allowed';
-            });
         }
 
         // ==================== УПРАВЛЕНИЕ СЕССИЕЙ ====================
@@ -1693,6 +1619,18 @@
             }, CONFIG.autoSaveInterval);
         }
 
+        function checkPrivacyAgreement() {
+            const privacyAgreed = getCookie('privacyAgreed') === 'true';
+            if (privacyAgreed) {
+                elements.privacyCheckbox.checked = true;
+            }
+            
+            const welcomeShown = getCookie('welcomeModalShown') === 'true';
+            if (!welcomeShown) {
+                elements.welcomeModal.classList.remove('hidden');
+            }
+        }
+
         // ==================== ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ ====================
         function clearChat() {
             if (!confirm('Вы уверены, что хотите очистить историю чата? Это действие нельзя отменить.')) {
@@ -1714,12 +1652,6 @@
             elements.messageInput.disabled = false;
             elements.sendButton.disabled = false;
             elements.messageInput.placeholder = 'Напишите ваш вопрос о строительной документации...';
-        
-            document.querySelectorAll('.feature-button').forEach(btn => {
-                btn.disabled = false;
-                btn.style.opacity = '1';
-                btn.style.cursor = 'pointer';
-            });
         
             focusInput();
         
@@ -1761,49 +1693,13 @@
             }
         }
 
-        // ==================== ТЕСТОВАЯ ФУНКЦИЯ ====================
-        async function debugWebhook() {
-            console.log('🔍 Отладка webhook...');
-        
-            const testData = {
-                message: 'Тестовое сообщение для отладки',
-                user_id: 'debug_user',
-                session_id: CONFIG.sessionId,
-                timestamp: new Date().toISOString()
-            };
-        
-            try {
-                const response = await fetch(CONFIG.webhookUrl, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(testData)
-                });
-            
-                const text = await response.text();
-                console.log('🔍 Статус:', response.status);
-                console.log('🔍 Ответ (текст):', text);
-            
-                try {
-                    const json = JSON.parse(text);
-                    console.log('🔍 Ответ (JSON):', json);
-                } catch (e) {
-                    console.error('🔍 Не удалось распарсить JSON:', e);
-                }
-            
-            } catch (error) {
-                console.error('🔍 Ошибка отладки:', error);
-            }
-        }
-
         // ==================== ЭКСПОРТ ФУНКЦИЙ ====================
         window.sendMessage = sendMessage;
-        window.insertQuickQuestion = insertQuickQuestion;
         window.clearChat = clearChat;
         window.closeWelcomeModal = closeWelcomeModal;
         window.startChat = startChat;
         window.showPrivacyModal = showPrivacyModal;
         window.closePrivacyModal = closePrivacyModal;
-        window.debugWebhook = debugWebhook;
     </script>
 </body>
 </html>
