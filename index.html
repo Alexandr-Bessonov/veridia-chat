@@ -1307,46 +1307,70 @@
         }
 
         // ==================== ИСПРАВЛЕННАЯ ФУНКЦИЯ ОБНОВЛЕНИЯ ПРОГРЕССА ====================
-        function updateProgressIndicator(data) {
-            if (!data) return;
-            
-            // Получаем собранные данные из ответа сервера
-            const collected = data.collected_data || data.session_data?.collected_data || {};
-            const missingFields = data.missing_fields || {};
-            
-            if (Object.keys(collected).length > 0 || Object.keys(missingFields).length > 0) {
-                elements.progressContainer.classList.remove('hidden');
-                
-                // Обновляем каждый элемент прогресса
-                const updateProgressItem = (itemId, fieldName, displayName, value, isMissing) => {
-                    const element = document.getElementById(itemId);
-                    if (element) {
-                        const icon = element.querySelector('.progress-icon');
-                        const text = element.querySelector('.progress-text');
-                        
-                        const hasValue = value && value.trim() !== '' && value !== 'Гость';
-                        
-                        if (hasValue) {
-                            icon.className = 'progress-icon completed';
-                            icon.innerHTML = `<i class="fas fa-check"></i>`;
-                            text.className = 'progress-text completed';
-                            text.textContent = `${displayName}: ${value}`;
-                        } else {
-                            icon.className = 'progress-icon pending';
-                            icon.innerHTML = `<i class="fas fa-${fieldName === 'name' ? 'user' : fieldName === 'phone' ? 'phone' : fieldName === 'email' ? 'envelope' : 'building'}"></i>`;
-                            text.className = 'progress-text';
-                            text.textContent = `${displayName}: не указан${fieldName === 'email' ? 'а' : 'о'}`;
-                        }
-                    }
-                };
-                
-                // Обновляем все элементы
-                updateProgressItem('progressName', 'name', 'Имя', collected.name, missingFields.name);
-                updateProgressItem('progressPhone', 'phone', 'Телефон', collected.phone, missingFields.phone);
-                updateProgressItem('progressEmail', 'email', 'Email', collected.email, missingFields.email);
-                updateProgressItem('progressProject', 'project_type', 'Тип проекта', collected.project_type, missingFields.project_type);
-            }
+        // ==================== ИСПРАВЛЕННАЯ ФУНКЦИЯ ОБНОВЛЕНИЯ ПРОГРЕССА ====================
+function updateProgressIndicator(data) {
+    if (!data) return;
+    
+    // Пытаемся получить данные из разных мест ответа
+    let collectedData = {};
+    
+    if (data.collected_data) {
+        collectedData = data.collected_data;
+    } else if (data.session_data && data.session_data.collected_data) {
+        collectedData = data.session_data.collected_data;
+    }
+    
+    // Если есть какие-то данные - показываем прогресс
+    if (Object.keys(collectedData).length > 0) {
+        elements.progressContainer.classList.remove('hidden');
+        
+        // Восстанавливаем предыдущие данные из localStorage
+        const savedSession = getSessionData();
+        if (savedSession && savedSession.collected_data) {
+            // Объединяем с сохраненными данными (сохраненные данные имеют приоритет)
+            collectedData = {
+                ...savedSession.collected_data,
+                ...collectedData
+            };
         }
+        
+        // Обновляем данные в localStorage
+        if (savedSession) {
+            savedSession.collected_data = collectedData;
+            saveSessionData(savedSession);
+        }
+        
+        // Обновляем каждый элемент прогресса
+        const updateProgressItem = (itemId, fieldName, displayName) => {
+            const element = document.getElementById(itemId);
+            if (element) {
+                const icon = element.querySelector('.progress-icon');
+                const text = element.querySelector('.progress-text');
+                
+                const value = collectedData[fieldName] || '';
+                const hasValue = value && value.trim() !== '' && value !== 'Гость';
+                
+                if (hasValue) {
+                    icon.className = 'progress-icon completed';
+                    icon.innerHTML = `<i class="fas fa-check"></i>`;
+                    text.className = 'progress-text completed';
+                    text.textContent = `${displayName}: ${value}`;
+                } else {
+                    icon.className = 'progress-icon pending';
+                    icon.innerHTML = `<i class="fas fa-${fieldName === 'name' ? 'user' : fieldName === 'phone' ? 'phone' : fieldName === 'email' ? 'envelope' : 'building'}"></i>`;
+                    text.className = 'progress-text';
+                    text.textContent = `${displayName}: не указан${fieldName === 'email' ? 'а' : 'о'}`;
+                }
+            }
+        };
+        
+        // Обновляем все элементы
+        updateProgressItem('progressName', 'name', 'Имя');
+        updateProgressItem('progressPhone', 'phone', 'Телефон');
+        updateProgressItem('progressEmail', 'email', 'Email');
+        updateProgressItem('progressProject', 'project_type', 'Тип проекта');
+    }
+}
 
         function scrollToBottom() {
             requestAnimationFrame(() => {
