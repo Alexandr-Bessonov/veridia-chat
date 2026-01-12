@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Согласие на обработку персональных данных | ВЕРИДИА</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background-color: #fff;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #e1e5eb;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1a365d 0%, #2d5aa0 100%);
+            color: white;
+            padding: 30px 40px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+        
+        .subtitle {
+            font-size: 18px;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .consent-text {
+            font-size: 16px;
+            text-align: justify;
+            margin-bottom: 25px;
+        }
+        
+        .highlight-box {
+            background-color: #f8fafc;
+            border-left: 5px solid #2d5aa0;
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .data-list {
+            margin: 20px 0;
+            padding-left: 20px;
+        }
+        
+        .data-list li {
+            margin-bottom: 8px;
+            padding-left: 5px;
+        }
+        
+        .important-note {
+            background-color: #fff8e1;
+            border: 1px solid #ffd54f;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 30px 0;
+        }
+        
+        .important-note h3 {
+            color: #ff8f00;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .contact-info {
+            background-color: #f1f5fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+            border: 1px solid #dbe4ff;
+        }
+        
+        .contact-info h3 {
+            color: #1a365d;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .footer {
+            background-color: #f8f9fa;
+            padding: 25px 40px;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .company-info {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        
+        .company-info a {
+            color: #2d5aa0;
+            text-decoration: none;
+        }
+        
+        .company-info a:hover {
+            text-decoration: underline;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        
+        .btn {
+            padding: 14px 30px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            min-width: 160px;
+            text-align: center;
+            text-decoration: none;
+        }
+        
+        .btn-accept {
+            background-color: #2d5aa0;
+            color: white;
+        }
+        
+        .btn-accept:hover {
+            background-color: #1a365d;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(42, 95, 199, 0.3);
+        }
+        
+        .btn-decline {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            border: 1px solid #dee2e6;
+        }
+        
+        .btn-decline:hover {
+            background-color: #e9ecef;
+            color: #495057;
+        }
+        
+        .btn-back {
+            background-color: transparent;
+            color: #2d5aa0;
+            border: 1px solid #2d5aa0;
+        }
+        
+        .btn-back:hover {
+            background-color: #f1f5fd;
+        }
+        
+        .checkbox-container {
+            display: flex;
+            align-items: flex-start;
+            margin: 30px 0;
+            padding: 15px;
+            background-color: #f8fafc;
+            border-radius: 8px;
+        }
+        
+        .checkbox-container input {
+            margin-right: 15px;
+            margin-top: 3px;
+            transform: scale(1.3);
+        }
+        
+        .checkbox-label {
+            font-size: 16px;
+            font-weight: 500;
+            color: #1a365d;
+        }
+        
+        .date-info {
+            text-align: center;
+            font-size: 14px;
+            color: #6c757d;
+            margin-top: 10px;
+            padding: 10px;
+            border-top: 1px dashed #dee2e6;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                border-radius: 0;
+            }
+            
+            .header, .content, .footer {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .subtitle {
+                font-size: 16px;
+            }
+            
+            .buttons {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+        
+        @media print {
+            .buttons, .checkbox-container {
+                display: none;
+            }
+            
+            body {
+                padding: 0;
+            }
+            
+            .container {
+                box-shadow: none;
+                border: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>СОГЛАСИЕ</h1>
+            <p class="subtitle">на обработку персональных данных</p>
+        </div>
+        
+        <div class="content">
+            <p class="consent-text">
+                В соответствии со ст. 9 Федерального закона от 27.07.2006 № 152-ФЗ «О персональных данных», с целью предоставления доступа к информации, материалам и (или) сервисам, содержащимся на сайте Оператора,
+            </p>
+            
+            <div class="highlight-box">
+                <p class="consent-text">
+                    даю согласие Обществу с ограниченной ответственностью «ВЕРИДИА», адрес, указанный в ЕГРЮЛ: 117105, г. Москва, вн.тер.г. муниципальный округ Донской, ш. Варшавское, д. 9, стр. 1, 2 этаж, пом. II, на автоматизированную, а также без использования средств автоматизации обработку моих персональных данных, а именно на сбор, запись, систематизацию, накопление, хранение, уточнение (обновление, изменение), извлечение, использование, передача (предоставление, доступ), передача (предоставление, доступ), блокирование, удаление, уничтожение персональных данных.
+                </p>
+            </div>
+            
+            <p class="consent-text">
+                Перечень персональных данных, на обработку которых я даю согласие:
+            </p>
+            
+            <ul class="data-list">
+                <li>Фамилия, имя, отчество;</li>
+                <li>Номер телефона;</li>
+                <li>Адрес электронной почты.</li>
+            </ul>
+            
+            <p class="consent-text">
+                Настоящее согласие действует с момента отправки формы на сайте на сайте https://veridia.ru/ в течение
+                <strong>10 (десяти) лет</strong> после достижения указанной выше цели обработки персональных данных.
+            </p>
+            
+            <div class="important-note">
+                <h3>Право на отзыв согласия</h3>
+                <p class="consent-text">
+                    Согласие может быть отозвано при предоставлении в ООО «ВЕРИДИА» заявления в простой письменной форме на адрес электронной почты: <strong>info@veridia.ru</strong>, а также путем письменного обращения по юридическому адресу: <strong>117105, г. Москва, вн.тер.г. муниципальный округ Донской, ш. Варшавское, д. 9, стр. 1, 2 этаж, пом. II.</strong>
+                </p>
+            </div>
+            
+            <div class="checkbox-container">
+                <input type="checkbox" id="consent-checkbox" name="consent">
+                <label for="consent-checkbox" class="checkbox-label">
+                    Я подтверждаю, что ознакомлен(а) с текстом согласия на обработку персональных данных и даю свое согласие на обработку указанных персональных данных в соответствии с изложенными условиями.
+                </label>
+            </div>
+            
+            <div class="contact-info">
+                <h3>Контактная информация Оператора:</h3>
+                <p><strong>ООО «ВЕРИДИА»</strong></p>
+                <p>ОГРН: 1247700679467, ИНН: 9726086220</p>
+                <p>Адрес: 117105, г. Москва, вн.тер.г. муниципальный округ Донской, ш. Варшавское, д. 9, стр. 1, 2 этаж, пом. II</p>
+                <p>Электронная почта: <a href="mailto:info@veridia.ru">info@veridia.ru</a></p>
+                <p>Сайт: <a href="https://veridia.ru/">https://veridia.ru/</a></p>
+            </div>
+            
+            <div class="date-info">
+                Дата составления согласия: <span id="current-date"></span>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <div class="company-info">
+                <p>© ООО «ВЕРИДИА» | ОГРН 1247700679467, ИНН 9726086220</p>
+                <p><a href="https://veridia.ru/privacy-policy.html" target="_blank">Политика конфиденциальности</a></p>
+            </div>
+            
+            <div class="buttons">
+                <button class="btn btn-accept" id="accept-btn" disabled>Даю согласие</button>
+                <button class="btn btn-decline" id="decline-btn">Не даю согласие</button>
+                <a href="https://veridia.ru/" class="btn btn-back">Вернуться на сайт</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Установка текущей даты
+        const currentDateElement = document.getElementById('current-date');
+        const today = new Date();
+        const options = { day: 'numeric', month: 'long', year: 'numeric' };
+        currentDateElement.textContent = today.toLocaleDateString('ru-RU', options);
+        
+        // Обработка чекбокса
+        const consentCheckbox = document.getElementById('consent-checkbox');
+        const acceptButton = document.getElementById('accept-btn');
+        
+        consentCheckbox.addEventListener('change', function() {
+            acceptButton.disabled = !this.checked;
+        });
+        
+        // Обработка кнопок
+        acceptButton.addEventListener('click', function() {
+            if (!consentCheckbox.checked) {
+                alert('Пожалуйста, подтвердите ознакомление с согласием, установив флажок.');
+                return;
+            }
+            
+            // Здесь обычно отправка данных на сервер
+            // Для примера показываем сообщение
+            alert('Ваше согласие на обработку персональных данных принято. Благодарим вас!');
+            
+            // Перенаправление на главную страницу или следующую страницу
+            // window.location.href = 'https://veridia.ru/';
+        });
+        
+        document.getElementById('decline-btn').addEventListener('click', function() {
+            const confirmDecline = confirm('Вы уверены, что не хотите давать согласие на обработку персональных данных? Без этого вы не сможете воспользоваться всеми сервисами сайта.');
+            
+            if (confirmDecline) {
+                alert('Вы отказались давать согласие на обработку персональных данных.');
+                // Перенаправление на главную страницу
+                window.location.href = 'https://veridia.ru/';
+            }
+        });
+        
+        // Печать страницы при нажатии Ctrl+P
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'p') {
+                e.preventDefault();
+                window.print();
+            }
+        });
+    </script>
+</body>
+</html>
