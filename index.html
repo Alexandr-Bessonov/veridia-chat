@@ -1191,7 +1191,9 @@
             userName: 'Гость',
             maxMessageLength: 2000,
             autoSaveInterval: 30000,
-            showWelcomeModal: true
+            showWelcomeModal: true,
+            maxRetries: 2, // Добавляем повторные попытки
+            retryDelay: 1000 // Задержка между попытками
         };
 
         // ==================== ЭЛЕМЕНТЫ DOM ====================
@@ -1409,7 +1411,7 @@
             elements.messageInput.focus();
         }
 
-        // ==================== ОТПРАВКА СООБЩЕНИЙ (ИСПРАВЛЕННАЯ) ====================
+        // ==================== УЛУЧШЕННАЯ ФУНКЦИЯ ОТПРАВКИ ====================
         async function sendMessage() {
             if (!elements.privacyCheckbox.checked) {
                 alert('Для отправки сообщения необходимо согласиться с Политикой конфиденциальности');
@@ -1433,25 +1435,68 @@
             elements.typingIndicator.classList.add('active');
             scrollToBottom();
             
+            // Пытаемся отправить с повторными попытками
+            let retryCount = 0;
+            let success = false;
+            let result = null;
+            
+            while (retryCount <= CONFIG.maxRetries && !success) {
+                try {
+                    if (retryCount > 0) {
+                        console.log(`Повторная попытка ${retryCount}...`);
+                        await delay(CONFIG.retryDelay);
+                    }
+                    
+                    result = await sendMessageToServer(message);
+                    success = true;
+                    
+                } catch (error) {
+                    console.error(`Попытка ${retryCount} не удалась:`, error);
+                    retryCount++;
+                    
+                    if (retryCount > CONFIG.maxRetries) {
+                        // Все попытки исчерпаны
+                        console.error('Все попытки отправки не удались');
+                        handleSendError(error, message);
+                    }
+                }
+            }
+            
+            if (success && result) {
+                handleSendSuccess(result);
+            }
+            
+            elements.typingIndicator.classList.remove('active');
+            elements.sendButton.disabled = false;
+            elements.messageInput.disabled = false;
+            focusInput();
+        }
+
+        // Вспомогательная функция для задержки
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Функция отправки сообщения на сервер
+        async function sendMessageToServer(message) {
+            const sessionData = getSessionData() || {};
+            
+            const requestData = {
+                message: message,
+                user_id: sessionData.user_id || CONFIG.userId,
+                session_id: sessionData.session_id || CONFIG.sessionId,
+                name: sessionData.user_name || CONFIG.userName,
+                session_data: sessionData,
+                timestamp: new Date().toISOString()
+            };
+            
+            console.log('Отправка запроса на:', CONFIG.webhookUrl);
+            console.log('Данные запроса:', requestData);
+            
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000);
+            
             try {
-                const sessionData = getSessionData() || {};
-                
-                // Правильно формируем данные для отправки
-                const requestData = {
-                    message: message,
-                    user_id: sessionData.user_id || CONFIG.userId,
-                    session_id: sessionData.session_id || CONFIG.sessionId,
-                    name: sessionData.user_name || CONFIG.userName,
-                    session_data: sessionData,
-                    timestamp: new Date().toISOString()
-                };
-                
-                console.log('Отправка запроса на:', CONFIG.webhookUrl);
-                console.log('Данные запроса:', requestData);
-                
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 30000);
-                
                 const response = await fetch(CONFIG.webhookUrl, {
                     method: 'POST',
                     headers: {
@@ -1492,85 +1537,81 @@
                     throw new Error(`Некорректный JSON: ${responseText.substring(0, 100)}`);
                 }
                 
-                let aiResponse = '';
-                let responseData = {};
-                
-                if (result && result.body) {
-                    aiResponse = result.body.text || result.body.message || 'Принято';
-                    responseData = result.body;
-                    
-                    if (result.body.session_id) {
-                        CONFIG.sessionId = result.body.session_id;
-                        console.log('Session ID установлен:', CONFIG.sessionId);
-                        
-                        // Сохраняем в sessionData
-                        sessionData.session_id = CONFIG.sessionId;
-                        if (result.body.user_name && result.body.user_name !== 'Гость') {
-                            sessionData.user_name = result.body.user_name;
-                            CONFIG.userName = result.body.user_name;
-                        }
-                        saveSessionData(sessionData);
-                    }
-                } else {
-                    aiResponse = 'Принято. Чем еще могу помочь?';
-                }
-                
-                // Сохраняем обновленные данные сессии
-                if (responseData.session_id) {
-                    sessionData.session_id = responseData.session_id;
-                }
-                if (responseData.user_name && responseData.user_name !== 'Гость') {
-                    sessionData.user_name = responseData.user_name;
-                    CONFIG.userName = responseData.user_name;
-                }
-                if (responseData.collected_data) {
-                    sessionData.collected_data = responseData.collected_data;
-                }
-                if (responseData.missing_fields) {
-                    sessionData.missing_fields = responseData.missing_fields;
-                }
-                
-                saveSessionData(sessionData);
-                
-                addMessage(aiResponse, 'assistant', responseData);
-                
-                if (responseData.continue_conversation === false) {
-                    disableChatInput('Диалог завершен. Спасибо за обращение!');
-                } else {
-                    elements.sendButton.disabled = false;
-                    elements.messageInput.disabled = false;
-                    focusInput();
-                }
+                return result;
                 
             } catch (error) {
-                console.error('Ошибка отправки сообщения:', error);
-                
-                let errorMessage = '⚠️ **Произошла ошибка**<br>';
-                
-                if (error.name === 'AbortError') {
-                    errorMessage += 'Таймаут запроса (30 сек). Сервер не отвечает.<br>';
-                    errorMessage += 'Возможно, n8n workflow занят или завершился с ошибкой.';
-                } else if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
-                    errorMessage += 'Проверьте подключение к интернету и доступность сервера.';
-                } else if (error.message.includes('Пустой ответ') || error.message.includes('Unexpected end')) {
-                    errorMessage += 'Сервер вернул пустой ответ.<br>';
-                    errorMessage += 'Проверьте логи n8n и убедитесь, что workflow активирован.';
-                } else if (error.message.includes('Некорректный JSON')) {
-                    errorMessage += 'Сервер вернул некорректный ответ.<br>';
-                    errorMessage += 'Проверьте консоль n8n на наличие ошибок.';
-                } else {
-                    errorMessage += error.message || 'Неизвестная ошибка';
-                }
-                
-                addMessage(errorMessage, 'assistant');
-                
-                elements.sendButton.disabled = false;
-                elements.messageInput.disabled = false;
-                focusInput();
-                
-            } finally {
-                elements.typingIndicator.classList.remove('active');
+                clearTimeout(timeoutId);
+                throw error;
             }
+        }
+
+        // Обработка успешной отправки
+        function handleSendSuccess(result) {
+            let aiResponse = '';
+            let responseData = {};
+            
+            if (result && result.body) {
+                aiResponse = result.body.text || result.body.message || 'Принято';
+                responseData = result.body;
+                
+                if (result.body.session_id) {
+                    CONFIG.sessionId = result.body.session_id;
+                    console.log('Session ID установлен:', CONFIG.sessionId);
+                }
+            } else {
+                aiResponse = 'Принято. Чем еще могу помочь?';
+            }
+            
+            // Сохраняем данные сессии
+            const sessionData = getSessionData() || {};
+            
+            if (responseData.session_id) {
+                sessionData.session_id = responseData.session_id;
+            }
+            if (responseData.user_name && responseData.user_name !== 'Гость') {
+                sessionData.user_name = responseData.user_name;
+                CONFIG.userName = responseData.user_name;
+            }
+            if (responseData.collected_data) {
+                sessionData.collected_data = responseData.collected_data;
+            }
+            if (responseData.missing_fields) {
+                sessionData.missing_fields = responseData.missing_fields;
+            }
+            
+            saveSessionData(sessionData);
+            
+            addMessage(aiResponse, 'assistant', responseData);
+            
+            if (responseData.continue_conversation === false) {
+                disableChatInput('Диалог завершен. Спасибо за обращение!');
+            }
+        }
+
+        // Обработка ошибки отправки
+        function handleSendError(error, originalMessage) {
+            console.error('Ошибка отправки сообщения:', error);
+            
+            let errorMessage = '⚠️ **Произошла ошибка**<br>';
+            
+            if (error.name === 'AbortError') {
+                errorMessage += 'Таймаут запроса (30 сек). Сервер не отвечает.<br>';
+                errorMessage += 'Возможно, n8n workflow занят или завершился с ошибкой.';
+            } else if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
+                errorMessage += 'Проверьте подключение к интернету и доступность сервера.';
+            } else if (error.message.includes('Пустой ответ') || error.message.includes('Unexpected end')) {
+                errorMessage += 'Сервер вернул пустой ответ.<br>';
+                errorMessage += 'Возможно, в n8n workflow произошла ошибка. Проверьте консоль n8n.';
+            } else if (error.message.includes('Некорректный JSON')) {
+                errorMessage += 'Сервер вернул некорректный ответ.<br>';
+                errorMessage += 'Проверьте консоль n8n на наличие ошибок.';
+            } else {
+                errorMessage += error.message || 'Неизвестная ошибка';
+            }
+            
+            errorMessage += '<br><br><em>Попробуйте отправить сообщение еще раз.</em>';
+            
+            addMessage(errorMessage, 'assistant');
         }
 
         function disableChatInput(placeholder = 'Диалог завершен') {
@@ -1743,6 +1784,54 @@
             }
         }
 
+        // ==================== ФУНКЦИЯ ДЛЯ ТЕСТИРОВАНИЯ ====================
+        async function testWebhook() {
+            console.log('🔍 Тестирование webhook...');
+            
+            const testData = {
+                message: 'Тестовое сообщение',
+                user_id: 'test_user',
+                session_id: 'test_session',
+                name: 'Тестовый пользователь',
+                session_data: {},
+                timestamp: new Date().toISOString()
+            };
+            
+            try {
+                const response = await fetch(CONFIG.webhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(testData),
+                    mode: 'cors'
+                });
+                
+                console.log('🔍 Тестовый статус:', response.status);
+                const text = await response.text();
+                console.log('🔍 Тестовый ответ:', text);
+                
+                if (text && text.trim() !== '') {
+                    try {
+                        const json = JSON.parse(text);
+                        console.log('🔍 Тестовый JSON:', json);
+                    } catch (e) {
+                        console.error('🔍 Не удалось распарсить JSON:', e);
+                    }
+                } else {
+                    console.error('🔍 ПУСТОЙ ОТВЕТ ОТ СЕРВЕРА!');
+                    console.error('🔍 Проверьте workflow в n8n:');
+                    console.error('🔍 1. Убедитесь, что workflow активирован');
+                    console.error('🔍 2. Проверьте логи n8n на наличие ошибок');
+                    console.error('🔍 3. Проверьте соединение между узлами workflow');
+                }
+                
+            } catch (error) {
+                console.error('🔍 Тестовая ошибка:', error);
+            }
+        }
+
         // ==================== ЭКСПОРТ ФУНКЦИЙ ====================
         window.sendMessage = sendMessage;
         window.clearChat = clearChat;
@@ -1750,6 +1839,8 @@
         window.startChat = startChat;
         window.showPrivacyModal = showPrivacyModal;
         window.closePrivacyModal = closePrivacyModal;
+        window.testWebhook = testWebhook;
     </script>
 </body>
 </html>
+        
