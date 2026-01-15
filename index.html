@@ -974,8 +974,7 @@
                         </div>
                         <div class="message-content">
                             <strong>Здравствуйте! Я Алексей, ведущий эксперт компании «ВЕРИДИА».</strong><br><br>
-                            Специализируюсь на инженерном сопровождении строительства и подготовке 
-                            исполнительной документации. Готов помочь с вашим проектом и провести 
+                            Специализируюсь на инженерном сопровождении строительства и подготовке ИД. Готов помочь с вашим проектом и провести 
                             бесплатный экспресс-аудит документации.<br><br>
                             <em>Расскажите, пожалуйста, о вашем объекте. Это промышленное здание, склад, 
                             или другой тип объекта?</em>
@@ -1214,6 +1213,9 @@
             connectionStatus: document.getElementById('connectionStatus')
         };
 
+        // ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
+        let chatHistory = []; // История всех сообщений для отправки на сервер
+
         // ==================== ИНИЦИАЛИЗАЦИЯ ====================
         document.addEventListener('DOMContentLoaded', () => {
             elements.initTime.textContent = getCurrentTime();
@@ -1274,6 +1276,7 @@
             messageDiv.className = `message ${sender}`;
             
             const time = getCurrentTime();
+            const plainText = text.replace(/<\/?[^>]+(>|$)/g, ""); // Убираем HTML теги для истории
             
             if (sender === 'user') {
                 messageDiv.innerHTML = `
@@ -1301,6 +1304,19 @@
             
             elements.messagesContainer.appendChild(messageDiv);
             scrollToBottom();
+            
+            // Сохраняем сообщение в историю
+            chatHistory.push({
+                text: plainText,
+                sender: sender,
+                time: time,
+                timestamp: new Date().toISOString()
+            });
+            
+            // Ограничиваем историю последними 20 сообщениями
+            if (chatHistory.length > 20) {
+                chatHistory = chatHistory.slice(-20);
+            }
             
             // ОБНОВЛЯЕМ ПРОГРЕСС ПОСЛЕ КАЖДОГО СООБЩЕНИЯ
             if (data) {
@@ -1444,6 +1460,7 @@
                     session_id: CONFIG.sessionId || sessionData.session_id,
                     name: CONFIG.userName,
                     session_data: sessionData.session_data || sessionData,
+                    conversation_history: chatHistory, // Передаем историю диалога
                     timestamp: new Date().toISOString()
                 };
                 
