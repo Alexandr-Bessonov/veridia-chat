@@ -1218,11 +1218,14 @@
         document.addEventListener('DOMContentLoaded', () => {
             elements.initTime.textContent = getCurrentTime();
             setupMessageInput();
-            setupSendButton(); // ИСПРАВЛЕНИЕ: настройка кнопки отправки
+            setupSendButton();
             restoreSession();
             checkPrivacyAgreement();
             startAutoSave();
             focusInput();
+            
+            // Проверяем и показываем прогресс при загрузке
+            updateProgressFromSession();
         });
 
         // ==================== ФУНКЦИИ УТИЛИТЫ ====================
@@ -1299,8 +1302,12 @@
             elements.messagesContainer.appendChild(messageDiv);
             scrollToBottom();
             
+            // ОБНОВЛЯЕМ ПРОГРЕСС ПОСЛЕ КАЖДОГО СООБЩЕНИЯ
             if (data) {
                 updateProgressIndicator(data);
+            } else {
+                // Если данных нет, пытаемся обновить из сессии
+                updateProgressFromSession();
             }
             
             saveMessageToHistory(text, sender, time, data);
@@ -1308,22 +1315,42 @@
 
         // ==================== ИСПРАВЛЕННАЯ ФУНКЦИЯ ОБНОВЛЕНИЯ ПРОГРЕССА ====================
         function updateProgressIndicator(data) {
-            if (!data) return;
+            console.log('Обновление прогресса:', data);
             
             // Получаем собранные данные из ответа сервера
             const collected = data.collected_data || data.session_data?.collected_data || {};
             const missingFields = data.missing_fields || {};
             
-            if (Object.keys(collected).length > 0 || Object.keys(missingFields).length > 0) {
+            // Также проверяем данные в сессии
+            const sessionData = getSessionData();
+            const sessionCollected = sessionData.session_data?.collected_data || sessionData.collected_data || {};
+            
+            // Объединяем данные из ответа и сессии
+            const allData = { ...sessionCollected, ...collected };
+            
+            // Сохраняем обновленные данные в сессию
+            if (Object.keys(allData).length > 0) {
+                const updatedSessionData = {
+                    ...sessionData,
+                    session_data: {
+                        ...sessionData.session_data,
+                        collected_data: allData
+                    }
+                };
+                saveSessionData(updatedSessionData);
+            }
+            
+            if (Object.keys(allData).length > 0 || Object.keys(missingFields).length > 0) {
                 elements.progressContainer.classList.remove('hidden');
                 
                 // Обновляем каждый элемент прогресса
-                const updateProgressItem = (itemId, fieldName, displayName, value, isMissing) => {
+                const updateProgressItem = (itemId, fieldName, displayName) => {
                     const element = document.getElementById(itemId);
                     if (element) {
                         const icon = element.querySelector('.progress-icon');
                         const text = element.querySelector('.progress-text');
                         
+                        const value = allData[fieldName];
                         const hasValue = value && value.trim() !== '' && value !== 'Гость';
                         
                         if (hasValue) {
@@ -1341,10 +1368,19 @@
                 };
                 
                 // Обновляем все элементы
-                updateProgressItem('progressName', 'name', 'Имя', collected.name, missingFields.name);
-                updateProgressItem('progressPhone', 'phone', 'Телефон', collected.phone, missingFields.phone);
-                updateProgressItem('progressEmail', 'email', 'Email', collected.email, missingFields.email);
-                updateProgressItem('progressProject', 'project_type', 'Тип проекта', collected.project_type, missingFields.project_type);
+                updateProgressItem('progressName', 'name', 'Имя');
+                updateProgressItem('progressPhone', 'phone', 'Телефон');
+                updateProgressItem('progressEmail', 'email', 'Email');
+                updateProgressItem('progressProject', 'project_type', 'Тип проекта');
+            }
+        }
+
+        function updateProgressFromSession() {
+            const sessionData = getSessionData();
+            if (sessionData && sessionData.session_data?.collected_data) {
+                updateProgressIndicator({
+                    collected_data: sessionData.session_data.collected_data
+                });
             }
         }
 
@@ -1405,7 +1441,7 @@
                 const requestData = {
                     message: message,
                     user_id: CONFIG.userId,
-                    session_id: CONFIG.sessionId,
+                    session_id: CONFIG.sessionId || sessionData.session_id,
                     name: CONFIG.userName,
                     session_data: sessionData.session_data || sessionData,
                     timestamp: new Date().toISOString()
@@ -1471,7 +1507,10 @@
                     if (result.body.session_id) {
                         CONFIG.sessionId = result.body.session_id;
                         console.log('Session ID установлен:', CONFIG.sessionId);
-                        saveSessionData({ session_id: CONFIG.sessionId });
+                        saveSessionData({ 
+                            session_id: CONFIG.sessionId,
+                            session_data: result.body.session_data || result.body
+                        });
                     }
                 } else if (result && result.response) {
                     aiResponse = result.response;
@@ -1483,8 +1522,15 @@
                     aiResponse = 'Принято. Чем еще могу помочь?';
                 }
                 
-                if (responseData.session_data) {
-                    saveSessionData(responseData.session_data);
+                // Сохраняем данные сессии из ответа
+                if (responseData.session_data || responseData.collected_data) {
+                    const currentSessionData = getSessionData();
+                    const updatedSessionData = {
+                        ...currentSessionData,
+                        session_data: responseData.session_data || currentSessionData.session_data,
+                        collected_data: responseData.collected_data || currentSessionData.collected_data
+                    };
+                    saveSessionData(updatedSessionData);
                 }
                 
                 addMessage(aiResponse, 'assistant', responseData);
@@ -1544,9 +1590,11 @@
 
         function saveSessionData(data) {
             try {
+                const currentData = getSessionData();
                 const session = {
+                    ...currentData,
                     ...data,
-                    session_id: CONFIG.sessionId,
+                    session_id: CONFIG.sessionId || currentData.session_id,
                     user_id: CONFIG.userId,
                     user_name: CONFIG.userName,
                     last_updated: new Date().toISOString()
@@ -1591,9 +1639,10 @@
                         userName: CONFIG.userName
                     });
                 
-                    if (savedSession.collected_data) {
+                    // Показываем прогресс при восстановлении сессии
+                    if (savedSession.session_data?.collected_data) {
                         updateProgressIndicator({
-                            collected_data: savedSession.collected_data
+                            collected_data: savedSession.session_data.collected_data
                         });
                     }
                 
