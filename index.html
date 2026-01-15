@@ -1515,39 +1515,146 @@
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 30000);
                 
-                const response = await fetch(CONFIG.webhookUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify(requestData),
-                    signal: controller.signal,
-                    mode: 'cors'
-                });
+                // Первая попытка запроса
+                let response;
+                try {
+                    response = await fetch(CONFIG.webhookUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(requestData),
+                        signal: controller.signal,
+                        mode: 'cors'
+                    });
+                } catch (fetchError) {
+                    console.error('Ошибка сети при отправке запроса:', fetchError);
+                    throw new Error('Проблема с соединением. Проверьте интернет и попробуйте снова.');
+                }
                 
                 clearTimeout(timeoutId);
                 
                 console.log('Статус ответа:', response.status);
                 
+                // Обработка ошибок HTTP
                 if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
+                    let errorMessage = `HTTP ошибка! Статус: ${response.status}`;
+                    
+                    if (response.status === 504 || response.status === 524) {
+                        errorMessage = 'Таймаут соединения с сервером. Пожалуйста, попробуйте снова.';
+                    } else if (response.status === 502 || response.status === 503) {
+                        errorMessage = 'Сервер временно недоступен. Пожалуйста, попробуйте позже.';
+                    } else if (response.status === 413) {
+                        errorMessage = 'Сообщение слишком длинное. Пожалуйста, сократите текст.';
+                    } else if (response.status === 429) {
+                        errorMessage = 'Слишком много запросов. Пожалуйста, подождите немного.';
+                    }
+                    
+                    throw new Error(errorMessage);
                 }
                 
                 const responseText = await response.text();
                 console.log('Ответ сервера получен, длина:', responseText.length);
                 
                 let result;
-                try {
-                    if (!responseText.trim()) {
-                        throw new Error('Пустой ответ от сервера');
-                    }
+                
+                // Проверка на пустой ответ
+                if (!responseText || responseText.trim() === '') {
+                    console.log('⚠️ Сервер вернул пустой ответ, используем fallback логику');
                     
-                    result = JSON.parse(responseText);
-                    console.log('Ответ сервера (JSON) успешно получен');
-                } catch (e) {
-                    console.error('Ошибка парсинга JSON:', e);
-                    throw new Error('Некорректный ответ от сервера');
+                    // Проверяем, содержит ли сообщение контактные данные
+                    const hasPhone = message.match(/(?:\+7|8|7)[\s\-]?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}/g);
+                    const hasEmail = message.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g);
+                    
+                    // Создаем fallback ответ
+                    if (hasPhone || hasEmail) {
+                        console.log('Обнаружены контактные данные в сообщении, завершаем диалог');
+                        
+                        // Создаем структурированный fallback ответ
+                        result = {
+                            body: {
+                                text: "✅ **Спасибо! Ваши контактные данные получены.**\n\n" +
+                                      "Наш менеджер свяжется с вами в ближайшее время для согласования деталей бесплатного аудита.\n\n" +
+                                      "**Контакты компании:**\n" +
+                                      "• Телефон: +7 (995) 923-10-18\n" +
+                                      "• Email: info@veridia.ru\n" +
+                                      "• Для документов: audit@veridia.ru\n\n" +
+                                      "_С уважением, команда ВЕРИДИА_ 🏗️",
+                                success: true,
+                                complete_conversation: true,
+                                session_id: CONFIG.sessionId,
+                                user_id: CONFIG.userId,
+                                user_name: CONFIG.userName,
+                                session_data: {
+                                    collected_data: {
+                                        name: CONFIG.userName,
+                                        phone: hasPhone ? hasPhone[0] : '',
+                                        email: hasEmail ? hasEmail[0] : '',
+                                        project_type: sessionData.session_data?.collected_data?.project_type || 'не указан',
+                                        last_message: message,
+                                        updated_at: new Date().toISOString()
+                                    },
+                                    conversation_length: (sessionData.conversation_length || 0) + 1,
+                                    is_reset_request: false
+                                }
+                            }
+                        };
+                    } else {
+                        // Если нет контактов, продолжаем диалог
+                        console.log('Контактов не обнаружено, продолжаем диалог');
+                        
+                        result = {
+                            body: {
+                                text: "Спасибо за сообщение! Подскажите, пожалуйста, как с вами можно связаться для подготовки коммерческого предложения?",
+                                success: true,
+                                complete_conversation: false,
+                                session_id: CONFIG.sessionId,
+                                user_id: CONFIG.userId,
+                                user_name: CONFIG.userName,
+                                session_data: sessionData.session_data || sessionData
+                            }
+                        };
+                    }
+                } else {
+                    // Парсим нормальный ответ
+                    try {
+                        result = JSON.parse(responseText);
+                        console.log('Ответ сервера (JSON) успешно получен');
+                    } catch (parseError) {
+                        console.error('Ошибка парсинга JSON:', parseError);
+                        console.log('Сырой ответ:', responseText.substring(0, 500));
+                        
+                        // Пробуем извлечь текст из невалидного JSON
+                        try {
+                            // Ищем JSON-like структуру
+                            const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+                            if (jsonMatch) {
+                                result = JSON.parse(jsonMatch[0]);
+                                console.log('Извлечен JSON из ответа');
+                            } else {
+                                throw new Error('Не удалось извлечь JSON');
+                            }
+                        } catch (extractError) {
+                            console.error('Не удалось извлечь JSON из ответа:', extractError);
+                            
+                            // Создаем fallback ответ
+                            result = {
+                                body: {
+                                    text: "📨 **Сообщение получено!**\n\n" +
+                                          "Спасибо за обращение. Наша система временно испытывает технические сложности.\n\n" +
+                                          "Пожалуйста, свяжитесь с нами напрямую:\n" +
+                                          "• Телефон: +7 (995) 923-10-18\n" +
+                                          "• Email: info@veridia.ru\n\n" +
+                                          "Или попробуйте отправить сообщение еще раз через минуту.",
+                                    success: false,
+                                    complete_conversation: true,
+                                    session_id: CONFIG.sessionId,
+                                    user_id: CONFIG.userId
+                                }
+                            };
+                        }
+                    }
                 }
                 
                 // Обработка ответа
@@ -1589,7 +1696,7 @@
                         // Отключаем ввод
                         disableChatInput('Спасибо за обращение! Наш менеджер свяжется с вами в ближайшее время.');
                         
-                        // Через 5 секунды начинаем новый диалог
+                        // Через 5 секунд начинаем новый диалог
                         setTimeout(() => {
                             resetSession();
                             enableChatInput();
@@ -1608,17 +1715,32 @@
             } catch (error) {
                 console.error('Ошибка отправки сообщения:', error);
                 
-                let errorMessage = '⚠️ **Произошла ошибка**<br>';
-                errorMessage += 'Пожалуйста, попробуйте позже или обновите страницу.<br>';
-                errorMessage += '<em>Если проблема сохранится, свяжитесь с нами напрямую:</em><br>';
-                errorMessage += '<strong>Телефон:</strong> +7 (995) 923-10-18<br>';
-                errorMessage += '<strong>Email:</strong> info@veridia.ru';
+                // Улучшенное сообщение об ошибке
+                let errorMessage = '⚠️ **Произошла ошибка**<br><br>';
+                
+                if (error.message.includes('Таймаут') || error.message.includes('соединения')) {
+                    errorMessage += 'Превышено время ожидания ответа от сервера.<br>';
+                    errorMessage += '<em>Пожалуйста, попробуйте отправить сообщение еще раз.</em><br><br>';
+                } else if (error.message.includes('недоступен') || error.message.includes('502') || error.message.includes('503')) {
+                    errorMessage += 'Сервер временно недоступен.<br>';
+                    errorMessage += '<em>Пожалуйста, попробуйте позже.</em><br><br>';
+                } else {
+                    errorMessage += error.message + '<br>';
+                    errorMessage += '<em>Пожалуйста, попробуйте позже или обновите страницу.</em><br><br>';
+                }
+                
+                errorMessage += '<strong>Альтернативные способы связи:</strong><br>';
+                errorMessage += '📞 Телефон: +7 (995) 923-10-18<br>';
+                errorMessage += '📧 Email: info@veridia.ru';
                 
                 addMessage(errorMessage, 'assistant');
                 
-                elements.sendButton.disabled = false;
-                elements.messageInput.disabled = false;
-                focusInput();
+                // Включаем ввод с небольшой задержкой
+                setTimeout(() => {
+                    elements.sendButton.disabled = false;
+                    elements.messageInput.disabled = false;
+                    focusInput();
+                }, 1000);
                 
             } finally {
                 elements.typingIndicator.classList.remove('active');
