@@ -12,6 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏗️</text></svg>">
     <style>
+        /* Стили остаются без изменений */
         :root {
             --primary-green: #93D500;
             --secondary-green: #6EAF2A;
@@ -1193,6 +1194,7 @@
         // ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
         let chatHistory = [];
         let autoSaveInterval = null;
+        let lastMessageTime = 0;
 
         // ==================== ИНИЦИАЛИЗАЦИЯ ====================
         document.addEventListener('DOMContentLoaded', () => {
@@ -1475,6 +1477,18 @@
 
         // ==================== ОТПРАВКА СООБЩЕНИЙ ====================
         async function sendMessage() {
+            // Защита от быстрых сообщений
+            const currentTime = Date.now();
+            const timeDiff = currentTime - lastMessageTime;
+            
+            if (timeDiff < 500) {
+                console.log('Сообщения отправляются слишком быстро, пропускаем...');
+                return;
+            }
+            
+            lastMessageTime = currentTime;
+            localStorage.setItem('last_message_time', currentTime.toString());
+            
             if (!elements.privacyCheckbox.checked) {
                 alert('Для отправки сообщения необходимо согласиться с Политикой конфиденциальности');
                 elements.privacyCheckbox.focus();
@@ -1515,7 +1529,6 @@
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 30000);
                 
-                // Первая попытка запроса
                 let response;
                 try {
                     response = await fetch(CONFIG.webhookUrl, {
@@ -1648,7 +1661,7 @@
                                           "• Email: info@veridia.ru\n\n" +
                                           "Или попробуйте отправить сообщение еще раз через минуту.",
                                     success: false,
-                                    complete_conversation: true,
+                                    complete_conversation: false,
                                     session_id: CONFIG.sessionId,
                                     user_id: CONFIG.userId
                                 }
@@ -1684,16 +1697,28 @@
                     // Добавляем ответ AI
                     addMessage(responseBody.text || 'Принято. Чем еще могу помочь?', 'assistant', responseBody);
                     
-                    // Проверяем, завершен ли диалог
-                    const isConversationComplete = responseBody.complete_conversation === true || 
-                                                   responseBody.continue_conversation === false ||
-                                                   responseBody.text?.toLowerCase().includes('менеджер свяжется') ||
-                                                   responseBody.text?.toLowerCase().includes('подготовим кп');
+                    // УТОЧНЕННАЯ логика завершения диалога
+                    // Завершаем ТОЛЬКО если явно указано complete_conversation: true
+                    // И есть контакты
+                    const shouldCompleteConversation = responseBody.complete_conversation === true;
+                    const hasContacts = responseBody.has_any_contact === true || 
+                                       (responseBody.collected_data && 
+                                       (responseBody.collected_data.phone || responseBody.collected_data.email));
                     
-                    if (isConversationComplete) {
-                        console.log('Диалог завершен, отправка в Telegram должна быть выполнена');
+                    // Сброс сессии - отдельная логика
+                    const shouldResetSession = responseBody.reset_session === true || 
+                                              responseBody.is_reset_request === true;
+                    
+                    console.log('Логика завершения:', {
+                        complete_conversation: shouldCompleteConversation,
+                        has_contacts: hasContacts,
+                        reset_session: shouldResetSession
+                    });
+                    
+                    if (shouldCompleteConversation && hasContacts) {
+                        console.log('Диалог успешно завершен, отправка в Telegram должна быть выполнена');
                         
-                        // Отключаем ввод
+                        // Отключаем ввод с сообщением о завершении
                         disableChatInput('Спасибо за обращение! Наш менеджер свяжется с вами в ближайшее время.');
                         
                         // Через 5 секунд начинаем новый диалог
@@ -1701,6 +1726,12 @@
                             resetSession();
                             enableChatInput();
                         }, 5000);
+                    } else if (shouldResetSession && !shouldCompleteConversation) {
+                        // Если это просто сброс сессии (по запросу пользователя)
+                        console.log('Сброс сессии по запросу, продолжаем диалог');
+                        elements.sendButton.disabled = false;
+                        elements.messageInput.disabled = false;
+                        focusInput();
                     } else {
                         // Продолжаем диалог
                         elements.sendButton.disabled = false;
