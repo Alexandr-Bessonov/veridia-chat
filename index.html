@@ -1035,7 +1035,7 @@
                             Я соглашаюсь с 
                             <a href="#" class="privacy-link" onclick="showPrivacyModal(event)">Политикой конфиденциальности</a> 
                             и даю согласие на обработку моих персональных данных в соответствии с 
-                            Федеральным законом № 152-ФЗ "О персональных данных"
+                            Федеральным законом № 152-FZ "О персональных данных"
                         </label>
                     </div>
                 </div>
@@ -1189,7 +1189,7 @@
         const CONFIG = {
             webhookUrl: 'https://bessonov-test.ru/webhook/veridia-webhook',
             sessionId: null,
-            userId: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            userId: null,
             userName: 'Гость',
             maxMessageLength: 2000,
             autoSaveInterval: 30000,
@@ -1217,20 +1217,18 @@
         };
 
         // ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
-        let chatHistory = []; // История всех сообщений для отправки на сервер
+        let chatHistory = []; // История всех сообщений для отправки на сервера
+        let autoSaveInterval = null; // Для очистки интервала
 
         // ==================== ИНИЦИАЛИЗАЦИЯ ====================
         document.addEventListener('DOMContentLoaded', () => {
             elements.initTime.textContent = getCurrentTime();
             setupMessageInput();
             setupSendButton();
-            restoreSession();
+            initializeSession();
             checkPrivacyAgreement();
             startAutoSave();
             focusInput();
-            
-            // Проверяем и показываем прогресс при загрузке
-            updateProgressFromSession();
         });
 
         // ==================== ФУНКЦИИ УТИЛИТЫ ====================
@@ -1268,12 +1266,218 @@
             return null;
         }
 
-        // ==================== ИСПРАВЛЕНИЕ: НАСТРОЙКА КНОПКИ ОТПРАВКИ ====================
+        // ==================== СЕССИЯ И СБРОС ====================
+        function initializeSession() {
+            // Проверяем, есть ли активная сессия в localStorage
+            const savedSession = getSessionData();
+            const currentTime = Date.now();
+            const sessionTimeout = 30 * 60 * 1000; // 30 минут для сброса сессии
+            
+            // Если сессия завершена или устарела - создаем новую
+            if (savedSession && savedSession.session_id) {
+                const sessionAge = currentTime - (savedSession.last_activity || 0);
+                const isSessionCompleted = savedSession.completed === true;
+                
+                if (isSessionCompleted || sessionAge > sessionTimeout) {
+                    // Создаем новую сессию
+                    createNewSession();
+                } else {
+                    // Восстанавливаем существующую сессию
+                    restoreSession();
+                }
+            } else {
+                // Создаем новую сессию
+                createNewSession();
+            }
+        }
+
+        function createNewSession() {
+            CONFIG.sessionId = `veridia_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            CONFIG.userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            CONFIG.userName = 'Гость';
+            
+            console.log('Создана новая сессия:', {
+                sessionId: CONFIG.sessionId,
+                userId: CONFIG.userId
+            });
+            
+            // Очищаем историю чата
+            clearChatMessages();
+            
+            // Очищаем localStorage
+            localStorage.removeItem('veridia_chat_session');
+            localStorage.removeItem('veridia_chat_history');
+            
+            // Сохраняем новую сессию
+            saveSessionData({
+                session_id: CONFIG.sessionId,
+                user_id: CONFIG.userId,
+                user_name: CONFIG.userName,
+                completed: false,
+                last_activity: Date.now()
+            });
+        }
+
+        function restoreSession() {
+            try {
+                const savedSession = getSessionData();
+                
+                if (savedSession && savedSession.session_id) {
+                    CONFIG.sessionId = savedSession.session_id;
+                    CONFIG.userId = savedSession.user_id;
+                    CONFIG.userName = savedSession.user_name || 'Гость';
+                    
+                    console.log('Сессия восстановлена:', {
+                        sessionId: CONFIG.sessionId,
+                        userId: CONFIG.userId,
+                        userName: CONFIG.userName,
+                        completed: savedSession.completed || false
+                    });
+                    
+                    // Если сессия завершена, создаем новую
+                    if (savedSession.completed === true) {
+                        console.log('Предыдущая сессия завершена, создаем новую');
+                        createNewSession();
+                        return;
+                    }
+                    
+                    // Восстанавливаем историю сообщений
+                    const savedHistory = JSON.parse(localStorage.getItem('veridia_chat_history') || '[]');
+                    if (savedHistory.length > 0) {
+                        // Очищаем текущие сообщения (кроме первого системного)
+                        const messages = elements.messagesContainer.querySelectorAll('.message');
+                        messages.forEach((msg, index) => {
+                            if (index > 0) msg.remove();
+                        });
+                        
+                        // Добавляем сохраненные сообщения
+                        savedHistory.forEach(msg => {
+                            if (msg.sender === 'assistant' && msg.text.includes('Добро пожаловать')) return;
+                            
+                            const messageDiv = document.createElement('div');
+                            messageDiv.className = `message ${msg.sender}`;
+                            
+                            if (msg.sender === 'user') {
+                                messageDiv.innerHTML = `
+                                    <div class="message-header">
+                                        <div class="avatar">В</div>
+                                        <div class="sender-info">
+                                            <div class="sender-name">Вы</div>
+                                        </div>
+                                    </div>
+                                    <div class="message-content">${formatMessage(msg.text)}</div>
+                                    <div class="message-time">${msg.time}</div>
+                                `;
+                            } else {
+                                messageDiv.innerHTML = `
+                                    <div class="message-header">
+                                        <div class="avatar">А</div>
+                                        <div class="sender-info">
+                                            <div class="sender-name">Алексей</div>
+                                        </div>
+                                    </div>
+                                    <div class="message-content">${formatMessage(msg.text)}</div>
+                                    <div class="message-time">${msg.time}</div>
+                                `;
+                            }
+                            
+                            elements.messagesContainer.appendChild(messageDiv);
+                        });
+                        
+                        scrollToBottom();
+                    }
+                    
+                    // Обновляем прогресс
+                    if (savedSession.session_data?.collected_data) {
+                        updateProgressIndicator({
+                            collected_data: savedSession.session_data.collected_data
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка восстановления сессии:', error);
+                createNewSession();
+            }
+        }
+
+        function completeSession() {
+            console.log('Завершение текущей сессии');
+            
+            // Помечаем сессию как завершенную
+            const sessionData = getSessionData();
+            if (sessionData) {
+                sessionData.completed = true;
+                sessionData.completed_at = new Date().toISOString();
+                localStorage.setItem('veridia_chat_session', JSON.stringify(sessionData));
+            }
+            
+            // Создаем новую сессию через 5 секунд
+            setTimeout(() => {
+                createNewSession();
+                
+                // Добавляем сообщение о новой сессии
+                setTimeout(() => {
+                    addMessage(
+                        'Новый диалог начат. Чем я могу вам помочь? Расскажите о вашем проекте.',
+                        'assistant'
+                    );
+                }, 500);
+            }, 5000); // Даем время пользователю увидеть финальное сообщение
+            
+            // Отключаем ввод на время
+            disableChatInput('Новый диалог будет начат автоматически...');
+        }
+
+        // ==================== ОЧИСТКА ЧАТА ====================
+        function clearChatMessages() {
+            // Сохраняем первое системное сообщение
+            const initialMessage = elements.messagesContainer.querySelector('.message.assistant');
+            const allMessages = elements.messagesContainer.querySelectorAll('.message');
+            
+            // Удаляем все сообщения кроме первого
+            allMessages.forEach((msg, index) => {
+                if (index > 0) msg.remove();
+            });
+            
+            // Очищаем историю
+            chatHistory = [];
+            
+            // Скрываем прогресс
+            elements.progressContainer.classList.add('hidden');
+            
+            // Сбрасываем индикаторы прогресса
+            resetProgressIndicators();
+            
+            console.log('История чата очищена');
+        }
+
+        function resetProgressIndicators() {
+            const progressItems = [
+                { id: 'progressName', icon: 'user', text: 'Имя: не указано' },
+                { id: 'progressPhone', icon: 'phone', text: 'Телефон: не указан' },
+                { id: 'progressEmail', icon: 'envelope', text: 'Email: не указан' },
+                { id: 'progressProject', icon: 'building', text: 'Тип проекта: не указан' }
+            ];
+            
+            progressItems.forEach(item => {
+                const element = document.getElementById(item.id);
+                if (element) {
+                    const icon = element.querySelector('.progress-icon');
+                    const text = element.querySelector('.progress-text');
+                    
+                    icon.className = 'progress-icon pending';
+                    icon.innerHTML = `<i class="fas fa-${item.icon}"></i>`;
+                    text.className = 'progress-text';
+                    text.textContent = item.text;
+                }
+            });
+        }
+
+        // ==================== УПРАВЛЕНИЕ ЧАТОМ ====================
         function setupSendButton() {
             elements.sendButton.addEventListener('click', sendMessage);
         }
 
-        // ==================== УПРАВЛЕНИЕ ЧАТОМ ====================
         function addMessage(text, sender = 'assistant', data = null) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${sender}`;
@@ -1321,45 +1525,22 @@
                 chatHistory = chatHistory.slice(-20);
             }
             
-            // ОБНОВЛЯЕМ ПРОГРЕСС ПОСЛЕ КАЖДОГО СООБЩЕНИЯ
+            // Сохраняем историю в localStorage
+            saveMessageToHistory(text, sender, time, data);
+            
+            // Обновляем прогресс если есть данные
             if (data) {
                 updateProgressIndicator(data);
-            } else {
-                // Если данных нет, пытаемся обновить из сессии
-                updateProgressFromSession();
             }
-            
-            saveMessageToHistory(text, sender, time, data);
         }
 
-        // ==================== ИСПРАВЛЕННАЯ ФУНКЦИЯ ОБНОВЛЕНИЯ ПРОГРЕССА ====================
         function updateProgressIndicator(data) {
             console.log('Обновление прогресса:', data);
             
-            // Получаем собранные данные из ответа сервера
             const collected = data.collected_data || data.session_data?.collected_data || {};
             const missingFields = data.missing_fields || {};
             
-            // Также проверяем данные в сессии
-            const sessionData = getSessionData();
-            const sessionCollected = sessionData.session_data?.collected_data || sessionData.collected_data || {};
-            
-            // Объединяем данные из ответа и сессии
-            const allData = { ...sessionCollected, ...collected };
-            
-            // Сохраняем обновленные данные в сессию
-            if (Object.keys(allData).length > 0) {
-                const updatedSessionData = {
-                    ...sessionData,
-                    session_data: {
-                        ...sessionData.session_data,
-                        collected_data: allData
-                    }
-                };
-                saveSessionData(updatedSessionData);
-            }
-            
-            if (Object.keys(allData).length > 0 || Object.keys(missingFields).length > 0) {
+            if (Object.keys(collected).length > 0) {
                 elements.progressContainer.classList.remove('hidden');
                 
                 // Обновляем каждый элемент прогресса
@@ -1369,7 +1550,7 @@
                         const icon = element.querySelector('.progress-icon');
                         const text = element.querySelector('.progress-text');
                         
-                        const value = allData[fieldName];
+                        const value = collected[fieldName];
                         const hasValue = value && value.trim() !== '' && value !== 'Гость';
                         
                         if (hasValue) {
@@ -1386,20 +1567,10 @@
                     }
                 };
                 
-                // Обновляем все элементы
                 updateProgressItem('progressName', 'name', 'Имя');
                 updateProgressItem('progressPhone', 'phone', 'Телефон');
                 updateProgressItem('progressEmail', 'email', 'Email');
                 updateProgressItem('progressProject', 'project_type', 'Тип проекта');
-            }
-        }
-
-        function updateProgressFromSession() {
-            const sessionData = getSessionData();
-            if (sessionData && sessionData.session_data?.collected_data) {
-                updateProgressIndicator({
-                    collected_data: sessionData.session_data.collected_data
-                });
             }
         }
 
@@ -1460,10 +1631,10 @@
                 const requestData = {
                     message: message,
                     user_id: CONFIG.userId,
-                    session_id: CONFIG.sessionId || sessionData.session_id,
+                    session_id: CONFIG.sessionId,
                     name: CONFIG.userName,
                     session_data: sessionData.session_data || sessionData,
-                    conversation_history: chatHistory, // Передаем историю диалога
+                    conversation_history: chatHistory,
                     timestamp: new Date().toISOString()
                 };
                 
@@ -1489,74 +1660,87 @@
                 console.log('Статус ответа:', response.status);
                 
                 if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('Ошибка сервера:', errorText);
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
                 
                 const responseText = await response.text();
-                console.log('Ответ сервера (текст):', responseText);
+                console.log('Ответ сервера (текст):', responseText.substring(0, 500) + '...');
                 
                 let result;
                 try {
+                    if (!responseText.trim()) {
+                        throw new Error('Пустой ответ от сервера');
+                    }
                     result = JSON.parse(responseText);
                     console.log('Ответ сервера (JSON):', result);
                 } catch (e) {
                     console.error('Ошибка парсинга JSON:', e);
-                    
-                    if (!responseText.trim()) {
-                        result = {
-                            body: {
-                                text: "Извините, произошла техническая ошибка. Пожалуйста, повторите вопрос.",
-                                session_id: CONFIG.sessionId,
-                                continue_conversation: true
-                            }
-                        };
-                    } else {
-                        throw new Error(`Некорректный ответ от сервера: ${responseText.substring(0, 100)}`);
-                    }
+                    throw new Error('Некорректный ответ от сервера');
                 }
                 
                 let aiResponse = '';
                 let responseData = {};
                 
                 if (result && result.body) {
-                    aiResponse = result.body.text || result.body.message || 'Принято';
+                    aiResponse = result.body.text || result.body.message || 'Принято. Чем еще могу помочь?';
                     responseData = result.body;
                     
                     if (result.body.session_id) {
                         CONFIG.sessionId = result.body.session_id;
                         console.log('Session ID установлен:', CONFIG.sessionId);
-                        saveSessionData({ 
-                            session_id: CONFIG.sessionId,
-                            session_data: result.body.session_data || result.body
-                        });
                     }
-                } else if (result && result.response) {
-                    aiResponse = result.response;
-                    responseData = result;
-                } else if (result && result.ai_response) {
-                    aiResponse = result.ai_response;
-                    responseData = result;
+                    
+                    // Обновляем имя пользователя если оно изменилось
+                    if (result.body.user_name && result.body.user_name !== CONFIG.userName) {
+                        CONFIG.userName = result.body.user_name;
+                    }
+                    
+                    // Сохраняем данные сессии
+                    saveSessionData({
+                        session_id: CONFIG.sessionId,
+                        user_id: CONFIG.userId,
+                        user_name: CONFIG.userName,
+                        session_data: responseData.session_data || responseData,
+                        last_activity: Date.now(),
+                        completed: false
+                    });
                 } else {
                     aiResponse = 'Принято. Чем еще могу помочь?';
                 }
                 
-                // Сохраняем данные сессии из ответа
-                if (responseData.session_data || responseData.collected_data) {
-                    const currentSessionData = getSessionData();
-                    const updatedSessionData = {
-                        ...currentSessionData,
-                        session_data: responseData.session_data || currentSessionData.session_data,
-                        collected_data: responseData.collected_data || currentSessionData.collected_data
-                    };
-                    saveSessionData(updatedSessionData);
-                }
-                
                 addMessage(aiResponse, 'assistant', responseData);
                 
+                // Проверяем, завершен ли диалог
                 if (responseData.continue_conversation === false) {
-                    disableChatInput('Диалог завершен. Спасибо за обращение!');
+                    console.log('Диалог завершен, начинаем сброс сессии');
+                    
+                    // Помечаем сессию как завершенную
+                    const currentSession = getSessionData();
+                    if (currentSession) {
+                        currentSession.completed = true;
+                        currentSession.completed_at = new Date().toISOString();
+                        localStorage.setItem('veridia_chat_session', JSON.stringify(currentSession));
+                    }
+                    
+                    // Отключаем ввод
+                    disableChatInput('Спасибо за обращение! Новый диалог начнется через 5 секунд...');
+                    
+                    // Запускаем таймер для сброса сессии
+                    setTimeout(() => {
+                        createNewSession();
+                        elements.messageInput.disabled = false;
+                        elements.sendButton.disabled = false;
+                        elements.messageInput.placeholder = 'Напишите ваш вопрос о строительной документации...';
+                        focusInput();
+                        
+                        // Добавляем приветственное сообщение
+                        setTimeout(() => {
+                            addMessage(
+                                'Новый диалог начат. Чем я могу вам помочь? Расскажите о вашем проекте.',
+                                'assistant'
+                            );
+                        }, 300);
+                    }, 5000);
                 } else {
                     elements.sendButton.disabled = false;
                     elements.messageInput.disabled = false;
@@ -1570,15 +1754,15 @@
                 
                 if (error.name === 'AbortError') {
                     errorMessage += 'Таймаут запроса (30 сек). Сервер не отвечает.<br>';
-                    errorMessage += 'Возможно, n8n workflow занят или завершился с ошибкой.';
-                } else if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
-                    errorMessage += 'Проверьте подключение к интернету и доступность сервера.';
-                } else if (error.message.includes('Unexpected end of JSON input')) {
-                    errorMessage += 'Сервер вернул пустой ответ.<br>';
-                    errorMessage += 'Проверьте логи n8n и убедитесь, что workflow активирован.';
+                } else if (error.message.includes('HTTP error')) {
+                    errorMessage += 'Ошибка сервера. Пожалуйста, попробуйте позже.<br>';
+                } else if (error.message.includes('Пустой ответ') || error.message.includes('Некорректный ответ')) {
+                    errorMessage += 'Сервер вернул некорректный ответ.<br>';
                 } else {
                     errorMessage += error.message || 'Неизвестная ошибка';
                 }
+                
+                errorMessage += '<br><em>Пожалуйста, повторите попытку.</em>';
                 
                 addMessage(errorMessage, 'assistant');
                 
@@ -1601,27 +1785,32 @@
         function getSessionData() {
             try {
                 const saved = localStorage.getItem('veridia_chat_session');
-                return saved ? JSON.parse(saved) : {};
+                return saved ? JSON.parse(saved) : null;
             } catch (error) {
                 console.error('Ошибка чтения сессии:', error);
-                return {};
+                return null;
             }
         }
 
         function saveSessionData(data) {
             try {
-                const currentData = getSessionData();
+                const currentData = getSessionData() || {};
                 const session = {
                     ...currentData,
                     ...data,
                     session_id: CONFIG.sessionId || currentData.session_id,
-                    user_id: CONFIG.userId,
-                    user_name: CONFIG.userName,
-                    last_updated: new Date().toISOString()
+                    user_id: CONFIG.userId || currentData.user_id,
+                    user_name: CONFIG.userName || currentData.user_name,
+                    last_updated: new Date().toISOString(),
+                    last_activity: Date.now()
                 };
             
                 localStorage.setItem('veridia_chat_session', JSON.stringify(session));
-                console.log('Сессия сохранена:', session);
+                console.log('Сессия сохранена:', {
+                    session_id: session.session_id,
+                    completed: session.completed,
+                    last_activity: new Date(session.last_activity).toLocaleTimeString()
+                });
             } catch (error) {
                 console.error('Ошибка сохранения сессии:', error);
             }
@@ -1638,52 +1827,23 @@
                     timestamp: new Date().toISOString()
                 });
             
+                // Сохраняем только последние 50 сообщений
                 localStorage.setItem('veridia_chat_history', JSON.stringify(history.slice(-50)));
             } catch (error) {
                 console.error('Ошибка сохранения истории:', error);
             }
         }
 
-        function restoreSession() {
-            try {
-                const savedSession = getSessionData();
-            
-                if (savedSession && savedSession.session_id) {
-                    CONFIG.sessionId = savedSession.session_id;
-                    CONFIG.userId = savedSession.user_id || CONFIG.userId;
-                    CONFIG.userName = savedSession.user_name || CONFIG.userName;
-                
-                    console.log('Сессия восстановлена:', {
-                        sessionId: CONFIG.sessionId,
-                        userId: CONFIG.userId,
-                        userName: CONFIG.userName
-                    });
-                
-                    // Показываем прогресс при восстановлении сессии
-                    if (savedSession.session_data?.collected_data) {
-                        updateProgressIndicator({
-                            collected_data: savedSession.session_data.collected_data
-                        });
-                    }
-                
-                    if (savedSession.continue_conversation === false) {
-                        disableChatInput('Предыдущий диалог завершен. Начните новый.');
-                    }
-                }
-            } catch (error) {
-                console.error('Ошибка восстановления сессии:', error);
-            }
-        }
-
         function startAutoSave() {
-            setInterval(() => {
+            if (autoSaveInterval) clearInterval(autoSaveInterval);
+            
+            autoSaveInterval = setInterval(() => {
                 if (CONFIG.sessionId) {
-                    const sessionData = getSessionData() || {};
-                    sessionData.last_activity = new Date().toISOString();
-                    sessionData.session_id = CONFIG.sessionId;
-                    sessionData.user_id = CONFIG.userId;
-                    sessionData.user_name = CONFIG.userName;
-                    saveSessionData(sessionData);
+                    const sessionData = getSessionData();
+                    if (sessionData && sessionData.completed !== true) {
+                        sessionData.last_activity = Date.now();
+                        saveSessionData(sessionData);
+                    }
                 }
             }, CONFIG.autoSaveInterval);
         }
@@ -1706,22 +1866,7 @@
                 return;
             }
         
-            const messages = elements.messagesContainer.querySelectorAll('.message');
-            messages.forEach((msg, index) => {
-                if (index > 0) msg.remove();
-            });
-        
-            localStorage.removeItem('veridia_chat_history');
-            localStorage.removeItem('veridia_chat_session');
-        
-            CONFIG.sessionId = null;
-            CONFIG.userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
-            elements.progressContainer.classList.add('hidden');
-            elements.messageInput.disabled = false;
-            elements.sendButton.disabled = false;
-            elements.messageInput.placeholder = 'Напишите ваш вопрос о строительной документации...';
-        
+            createNewSession();
             focusInput();
         
             addMessage('История чата была очищена. Теперь начнем новый диалог. Расскажите о вашем проекте.', 'assistant');
