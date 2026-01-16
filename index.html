@@ -956,8 +956,8 @@
                         </div>
                         <div class="message-content">
                             <strong>Здравствуйте! Я Алексей, ведущий эксперт компании «ВЕРИДИА».</strong>
-                            <br><br>Специализируюсь на инженерном сопровождении строительства и подготовке ИД. 
-                            Готов помочь с вашим проектом и провести бесплатный экспресс-аудит документации.<br><br>
+                            Специализируюсь на инженерном сопровождении строительства и подготовке ИД. Готов помочь с вашим проектом и провести бесплатный экспресс-аудит документации.
+                            <br><br>
                             <em>Расскажите, пожалуйста, о вашем объекте. Мы специализируемся на промышленных зданиях, складах, офисных центрах, общественных зданиях и крупных ЖК (от 1000 м²). Не работаем с частными домами (ИЖС).</em>
                         </div>
                         <div class="message-time" id="initTime"></div>
@@ -970,51 +970,6 @@
                         <span></span>
                         <span></span>
                         <span></span>
-                    </div>
-                </div>
-
-                <div class="progress-container hidden" id="progressContainer">
-                    <div class="progress-title">
-                        <i class="fas fa-chart-line"></i>
-                        Сбор информации для подготовки коммерческого предложения
-                    </div>
-                    <div class="progress-items">
-                        <div class="progress-item" id="progressName">
-                            <div class="progress-icon pending">
-                                <i class="fas fa-user"></i>
-                            </div>
-                            <span class="progress-text">Имя: не указано</span>
-                        </div>
-                        <div class="progress-item" id="progressPhone">
-                            <div class="progress-icon pending">
-                                <i class="fas fa-phone"></i>
-                            </div>
-                            <span class="progress-text">Телефон: не указан</span>
-                        </div>
-                        <div class="progress-item" id="progressEmail">
-                            <div class="progress-icon pending">
-                                <i class="fas fa-envelope"></i>
-                            </div>
-                            <span class="progress-text">Email: не указан</span>
-                        </div>
-                        <div class="progress-item" id="progressProject">
-                            <div class="progress-icon pending">
-                                <i class="fas fa-building"></i>
-                            </div>
-                            <span class="progress-text">Тип проекта: не указан</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="privacy-agreement" id="privacyAgreement">
-                    <div class="privacy-checkbox">
-                        <input type="checkbox" id="privacyCheckbox">
-                        <label for="privacyCheckbox" class="privacy-text">
-                            Я соглашаюсь с 
-                            <a href="#" class="privacy-link" onclick="showPrivacyModal(event)">Политикой конфиденциальности</a> 
-                            и даю согласие на обработку моих персональных данных в соответствии с 
-                            Федеральным законом № 152-ФЗ "О персональных данных"
-                        </label>
                     </div>
                 </div>
 
@@ -1034,6 +989,18 @@
                         <button class="send-button" id="sendButton" aria-label="Отправить сообщение">
                             <i class="fas fa-paper-plane"></i>
                         </button>
+                    </div>
+                </div>
+                
+                <div class="privacy-agreement" id="privacyAgreement">
+                    <div class="privacy-checkbox">
+                        <input type="checkbox" id="privacyCheckbox">
+                        <label for="privacyCheckbox" class="privacy-text">
+                            Я соглашаюсь с 
+                            <a href="#" class="privacy-link" onclick="showPrivacyModal(event)">Политикой конфиденциальности</a> 
+                            и даю согласие на обработку моих персональных данных в соответствии с 
+                            Федеральным законом № 152-ФЗ "О персональных данных"
+                        </label>
                     </div>
                 </div>
             </div>
@@ -1176,11 +1143,6 @@
             messageInput: document.getElementById('messageInput'),
             sendButton: document.getElementById('sendButton'),
             typingIndicator: document.getElementById('typingIndicator'),
-            progressContainer: document.getElementById('progressContainer'),
-            progressName: document.getElementById('progressName'),
-            progressPhone: document.getElementById('progressPhone'),
-            progressEmail: document.getElementById('progressEmail'),
-            progressProject: document.getElementById('progressProject'),
             welcomeModal: document.getElementById('welcomeModal'),
             privacyModal: document.getElementById('privacyModal'),
             privacyCheckbox: document.getElementById('privacyCheckbox'),
@@ -1281,9 +1243,6 @@
                 conversation_history: []
             });
             
-            // Сбрасываем прогресс
-            resetProgressIndicators();
-            
             // Добавляем приветственное сообщение
             setTimeout(() => {
                 addMessage(
@@ -1314,11 +1273,10 @@
                     </div>
                 </div>
                 <div class="message-content">
-                    <strong>Здравствуйте! Я Алексей, ведущий эксперт компании «ВЕРИДИА».</strong><br><br>
-                    Специализируюсь на инженерном сопровождении строительства и подготовке ИД. Готов помочь с вашим проектом и провести 
-                    бесплатный экспресс-аудит документации.<br><br>
-                    <em>Расскажите, пожалуйста, о вашем объекте. Мы специализируемся на промышленных зданиях, складах, 
-                    офисных центрах, общественных зданиях и крупных ЖК (от 1000 м²). Не работаем с частными домами (ИЖС).</em>
+                    <strong>Здравствуйте! Я Алексей, ведущий эксперт компании «ВЕРИДИА».</strong>
+                    Специализируюсь на инженерном сопровождении строительства и подготовке ИД. Готов помочь с вашим проектом и провести бесплатный экспресс-аудит документации.
+                    <br><br>
+                    <em>Расскажите, пожалуйста, о вашем объекте. Мы специализируемся на промышленных зданиях, складах, офисных центрах, общественных зданиях и крупных ЖК (от 1000 м²). Не работаем с частными домами (ИЖС).</em>
                 </div>
                 <div class="message-time">${getCurrentTime()}</div>
             `;
@@ -1328,32 +1286,7 @@
             // Очищаем историю
             chatHistory = [];
             
-            // Скрываем прогресс
-            elements.progressContainer.classList.add('hidden');
-            
             console.log('История чата очищена');
-        }
-
-        function resetProgressIndicators() {
-            const progressItems = [
-                { id: 'progressName', icon: 'user', text: 'Имя: не указано' },
-                { id: 'progressPhone', icon: 'phone', text: 'Телефон: не указан' },
-                { id: 'progressEmail', icon: 'envelope', text: 'Email: не указан' },
-                { id: 'progressProject', icon: 'building', text: 'Тип проекта: не указан' }
-            ];
-            
-            progressItems.forEach(item => {
-                const element = document.getElementById(item.id);
-                if (element) {
-                    const icon = element.querySelector('.progress-icon');
-                    const text = element.querySelector('.progress-text');
-                    
-                    icon.className = 'progress-icon pending';
-                    icon.innerHTML = `<i class="fas fa-${item.icon}"></i>`;
-                    text.className = 'progress-text';
-                    text.textContent = item.text;
-                }
-            });
         }
 
         // ==================== УПРАВЛЕНИЕ ЧАТОМ ====================
@@ -1402,48 +1335,6 @@
                 time: time,
                 timestamp: new Date().toISOString()
             });
-            
-            // Обновляем прогресс если есть данные
-            if (data) {
-                updateProgressIndicator(data);
-            }
-        }
-
-        function updateProgressIndicator(data) {
-            const collected = data.collected_data || data.session_data?.collected_data || {};
-            
-            if (Object.keys(collected).length > 0) {
-                elements.progressContainer.classList.remove('hidden');
-                
-                // Обновляем каждый элемент прогресса
-                const updateProgressItem = (itemId, fieldName, displayName) => {
-                    const element = document.getElementById(itemId);
-                    if (element) {
-                        const icon = element.querySelector('.progress-icon');
-                        const text = element.querySelector('.progress-text');
-                        
-                        const value = collected[fieldName];
-                        const hasValue = value && value.trim() !== '' && value !== 'Гость';
-                        
-                        if (hasValue) {
-                            icon.className = 'progress-icon completed';
-                            icon.innerHTML = `<i class="fas fa-check"></i>`;
-                            text.className = 'progress-text completed';
-                            text.textContent = `${displayName}: ${value}`;
-                        } else {
-                            icon.className = 'progress-icon pending';
-                            icon.innerHTML = `<i class="fas fa-${fieldName === 'name' ? 'user' : fieldName === 'phone' ? 'phone' : fieldName === 'email' ? 'envelope' : 'building'}"></i>`;
-                            text.className = 'progress-text';
-                            text.textContent = `${displayName}: не указан${fieldName === 'email' ? 'а' : 'о'}`;
-                        }
-                    }
-                };
-                
-                updateProgressItem('progressName', 'name', 'Имя');
-                updateProgressItem('progressPhone', 'phone', 'Телефон');
-                updateProgressItem('progressEmail', 'email', 'Email');
-                updateProgressItem('progressProject', 'project_type', 'Тип проекта');
-            }
         }
 
         function scrollToBottom() {
@@ -1694,37 +1585,25 @@
                     });
                     
                     // Добавляем ответ AI
-                    addMessage(responseBody.text || 'Принято. Чем еще могу помочь?', 'assistant', responseBody);
+                    addMessage(responseBody.text || 'Принято. Чем еще могу помочь?', 'assistant');
                     
                     // УТОЧНЕННАЯ логика завершения диалога
-                    // Завершаем ТОЛЬКО если явно указано complete_conversation: true
-                    // И есть контакты
                     const shouldCompleteConversation = responseBody.complete_conversation === true;
-                    const hasContacts = responseBody.has_any_contact === true || 
-                                       (responseBody.collected_data && 
-                                       (responseBody.collected_data.phone || responseBody.collected_data.email));
-                    
-                    // Сброс сессии - отдельная логика
                     const shouldResetSession = responseBody.reset_session === true || 
                                               responseBody.is_reset_request === true;
                     
                     console.log('Логика завершения:', {
                         complete_conversation: shouldCompleteConversation,
-                        has_contacts: hasContacts,
                         reset_session: shouldResetSession
                     });
                     
-                    if (shouldCompleteConversation && hasContacts) {
-                        console.log('Диалог успешно завершен, отправка в Telegram должна быть выполнена');
+                    if (shouldCompleteConversation) {
+                        console.log('Диалог успешно завершен, заявка отправлена в обработку');
                         
-                        // Отключаем ввод с сообщением о завершении
-                        disableChatInput('Спасибо за обращение! Наш менеджер свяжется с вами в ближайшее время.');
-                        
-                        // Через 5 секунд начинаем новый диалог
+                        // Через 3 секунды начинаем новый диалог
                         setTimeout(() => {
                             resetSession();
-                            enableChatInput();
-                        }, 5000);
+                        }, 3000);
                     } else if (shouldResetSession && !shouldCompleteConversation) {
                         // Если это просто сброс сессии (по запросу пользователя)
                         console.log('Сброс сессии по запросу, продолжаем диалог');
@@ -1775,19 +1654,6 @@
             } finally {
                 elements.typingIndicator.classList.remove('active');
             }
-        }
-
-        function disableChatInput(placeholder = 'Диалог завершен') {
-            elements.messageInput.disabled = true;
-            elements.sendButton.disabled = true;
-            elements.messageInput.placeholder = placeholder;
-        }
-
-        function enableChatInput() {
-            elements.messageInput.disabled = false;
-            elements.sendButton.disabled = false;
-            elements.messageInput.placeholder = 'Напишите ваш вопрос о строительной документации...';
-            focusInput();
         }
 
         // ==================== УПРАВЛЕНИЕ СЕССИЕЙ ====================
